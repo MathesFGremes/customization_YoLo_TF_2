@@ -24,7 +24,7 @@ flags.DEFINE_string('video', './data/video/video.mp4', 'path to input video or s
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_float('iou', 0.45, 'iou threshold')
-flags.DEFINE_float('score', 0.25, 'score threshold')
+flags.DEFINE_float('score', 0.5, 'score threshold')
 flags.DEFINE_boolean('dont_show', False, 'dont show video output')
 
 def main(_argv):
