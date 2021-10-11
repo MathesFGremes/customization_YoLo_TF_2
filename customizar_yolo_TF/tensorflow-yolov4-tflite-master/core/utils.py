@@ -130,10 +130,11 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed
     hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
     colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+    colors = list(((255, 0, 0), (0, 0, 255), (255, 0, 255)))
 
-    random.seed(0)
-    random.shuffle(colors)
-    random.seed(None)
+    #random.seed(0)
+    #random.shuffle(colors)
+    #random.seed(None)
 
     out_boxes, out_scores, out_classes, num_boxes = bboxes
     for i in range(num_boxes[0]):
