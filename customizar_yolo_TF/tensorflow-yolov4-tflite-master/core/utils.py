@@ -154,12 +154,12 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed
             continue
         else:
             bbox_color = colors[class_ind]
-            bbox_thick = int(0.6 * (image_h + image_w) / 600)
+            bbox_thick = int(0.1 * (image_h + image_w) / 1000)
             c1, c2 = (coor[1], coor[0]), (coor[3], coor[2])
             cv2.rectangle(image, c1, c2, bbox_color, bbox_thick)
 
             if show_label:
-                bbox_mess = '%s: %.2f' % (classes[class_ind], score)
+                bbox_mess = '%.2f' % (score)
                 t_size = cv2.getTextSize(bbox_mess, 0, fontScale, thickness=bbox_thick // 2)[0]
                 c3 = (c1[0] + t_size[0], c1[1] - t_size[1] - 3)
                 cv2.rectangle(image, c1, (np.float32(c3[0]), np.float32(c3[1])), bbox_color, -1) #filled
