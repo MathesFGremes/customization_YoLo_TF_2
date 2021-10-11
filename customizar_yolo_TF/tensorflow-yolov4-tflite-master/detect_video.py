@@ -99,8 +99,8 @@ def main(_argv):
             boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
             scores=tf.reshape(
                 pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
-            max_output_size_per_class=50,
-            max_total_size=50,
+            max_output_size_per_class=500,
+            max_total_size=500,
             iou_threshold=FLAGS.iou,
             score_threshold=FLAGS.score
         )
