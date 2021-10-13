@@ -106,13 +106,24 @@ def main(_argv):
         )
         pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
         image = utils.draw_bbox(frame, pred_bbox)
-        
+        #print(pred_bbox[0].size)
+        #print(pred_bbox[1])
+        #print(pred_bbox[2])
+        #print(pred_bbox[3])
+
+        ##### como ter todas as posições das BB detectadas pela YoLo ####
+        for i in range(pred_bbox[3][0]):
+            print(pred_bbox[0][0][i])
+        print(pred_bbox[3][0])
+        print()
+        ##### como ter todas as posições das BB detectadas pela YoLo ####
+
         fps = 1.0 / (time.time() - start_time)
             
         count_mat = count_mat + 1
         if count_mat > 60:
             print("FPS: %.2f" % fps)
-            cont_mat = 0
+            count_mat = 0
         result = np.asarray(image)
         #cv2.namedWindow("result", cv2.WINDOW_AUTOSIZE)
         result = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
