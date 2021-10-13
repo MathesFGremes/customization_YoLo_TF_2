@@ -112,10 +112,20 @@ def main(_argv):
         #print(pred_bbox[3])
 
         ##### como ter todas as posições das BB detectadas pela YoLo ####
+        
+        image_h, image_w, _ = frame.shape
         for i in range(pred_bbox[3][0]):
-            print(pred_bbox[0][0][i])
+            coor = pred_bbox[0][0][i]
+            coor[0] = int(coor[0] * image_h)
+            coor[2] = int(coor[2] * image_h)
+            coor[1] = int(coor[1] * image_w)
+            coor[3] = int(coor[3] * image_w)
+
+            print(coor[0], coor[2], coor[1], coor[3])
+            #print(pred_bbox[0][0][i], pred_bbox[1][0][i], pred_bbox[2][0][i])
         print(pred_bbox[3][0])
         print()
+        
         ##### como ter todas as posições das BB detectadas pela YoLo ####
 
         fps = 1.0 / (time.time() - start_time)
