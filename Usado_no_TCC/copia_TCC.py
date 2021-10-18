@@ -1,4 +1,4 @@
-from pyimagesearch.centroidtrecker import CentroidTracker
+from pyimagesearch.centroidtracker import CentroidTracker
 from imutils.video import VideoStream
 from imutils.video import FPS
 import numpy as np
@@ -64,7 +64,7 @@ while True:
     # checa se ira utilizar o detector de objetos ou o rastreados
     if totalFrames % args["skip_frames"] == 0:
         # Inicializa a nova variavel de rastreador de objetos
-        tracker = []
+        trackers = []
         corBox = (0, 0, 255)
 
         #aplica YoLo v3
@@ -95,7 +95,7 @@ while True:
                 tracker.start_track(rgb, rect)
 
                 #adiciona os rastreadores para a lisa dos rastreadores
-                tracker.append(tracker)
+                trackers.append(tracker)
 
     #se o detector de objetos não for ser utilizado, utilizara o
     #rastreador de objetos

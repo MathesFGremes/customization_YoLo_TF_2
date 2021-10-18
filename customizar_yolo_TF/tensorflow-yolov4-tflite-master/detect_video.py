@@ -105,7 +105,14 @@ def main(_argv):
             score_threshold=FLAGS.score
         )
         pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
-        
+        image_h, image_w, _ = frame.shape
+        for i in range(pred_bbox[3][0]):
+            coor = pred_bbox[0][0][i]
+            #coor[0] = int(coor[0] * image_h)
+            #coor[2] = int(coor[2] * image_h)
+            #coor[1] = int(coor[1] * image_w)
+            #coor[3] = int(coor[3] * image_w)
+
         image = utils.draw_bbox(frame, pred_bbox)
         #print(pred_bbox[0].size)
         #print(pred_bbox[1])
@@ -118,7 +125,8 @@ def main(_argv):
         for i in range(pred_bbox[3][0]):
             coor = pred_bbox[0][0][i]
             # esses valores já estão em pixels
-            print(coor[0], coor[2], coor[1], coor[3])
+            print(coor[0], coor[2], coor[1], coor[3], pred_bbox[1][0][i])
+            # confianca da rede pred_bbox[1][0][i]
             #print(pred_bbox[0][0][i], pred_bbox[1][0][i], pred_bbox[2][0][i])
         print(pred_bbox[3][0])
         print(image_h, image_w)

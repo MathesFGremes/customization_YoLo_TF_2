@@ -1,3 +1,5 @@
+from pyimagesearch.centroidtracker import CentroidTracker
+#import pyimagesearch.centroidtracker as centroidT
 import time
 import tensorflow as tf
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -63,10 +65,12 @@ def main(_argv):
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
     count_mat = 0
+    totalFrames = 0
     while True:
         return_value, frame = vid.read()
         if return_value:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(frame)
         else:
             print('Video has ended or failed, try a different video format!')
@@ -94,31 +98,46 @@ def main(_argv):
             for key, value in pred_bbox.items():
                 boxes = value[:, :, 0:4]
                 pred_conf = value[:, :, 4:]
-
-        boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
-            boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
-            scores=tf.reshape(
-                pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
-            max_output_size_per_class=500,
-            max_total_size=500,
-            iou_threshold=FLAGS.iou,
-            score_threshold=FLAGS.score
-        )
-        pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
         
-        image_h, image_w, _ = frame.shape
-        for i in range(pred_bbox[3][0]):
-            coor = pred_bbox[0][0][i]
-            #coor[0] = int(coor[0] * image_h)
-            #coor[2] = int(coor[2] * image_h)
-            #coor[1] = int(coor[1] * image_w)
-            #coor[3] = int(coor[3] * image_w)
+        ## IGUAL TCC
+        if totalFrames % skip_frames == 0:
+            # Inicializa a nova variavel de rastreador de objetos
+            trackers = []
+            ###################### DETECCAO YOLO V4 ######################## inicio
+            boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
+                boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
+                scores=tf.reshape(
+                    pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
+                max_output_size_per_class=500,
+                max_total_size=500,
+                iou_threshold=FLAGS.iou,
+                score_threshold=FLAGS.score
+            )
+            pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
+            ###################### DETECCAO YOLO V4 ######################## fim
+            for i in range(pred_bbox[3][0]):
+                # extrai a confiança da predição
+                confidence = pred_bbox[1][0][i]
 
-            print(coor[0], coor[2], coor[1], coor[3])
-            #print(pred_bbox[0][0][i], pred_bbox[1][0][i], pred_bbox[2][0][i])
-        print(pred_bbox[3][0])
-        print(image_h, image_w)
-        print()
+                # filtra predições com baixa condiança
+                if confidence > confidence_filter:
+            '''
+            ###################### APENAS PARA SABER O CONTEUDO DA DETECCAO ########## inicio
+            image_h, image_w, _ = frame.shape
+            for i in range(pred_bbox[3][0]):
+                coor = pred_bbox[0][0][i]
+                #coor[0] = int(coor[0] * image_h)
+                #coor[2] = int(coor[2] * image_h)
+                #coor[1] = int(coor[1] * image_w)
+                #coor[3] = int(coor[3] * image_w)
+
+                print(coor[0], coor[2], coor[1], coor[3])
+                #print(pred_bbox[0][0][i], pred_bbox[1][0][i], pred_bbox[2][0][i])
+            print(pred_bbox[3][0])
+            print(image_h, image_w)
+            print()
+            ###################### APENAS PARA SABER O CONTEUDO DA DETECCAO ########## fim
+            '''
         
         
         image = utils.draw_bbox(frame, pred_bbox)
@@ -165,6 +184,10 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
+    ct = CentroidTracker(maxDisappeared=33, maxDistance=25)
+    trackers = []
+    skip_frames = 10
+    confidence_filter = 0.75
     try:
         app.run(main)
     except SystemExit:

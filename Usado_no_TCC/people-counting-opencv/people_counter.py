@@ -152,7 +152,7 @@ while True:
 				# for the object
 				box = detections[0, 0, i, 3:7] * np.array([W, H, W, H])
 				(startX, startY, endX, endY) = box.astype("int")
-				print((startX, startY, endX, endY))
+				#print((startX, startY, endX, endY))
 
 				# construct a dlib rectangle object from the bounding
 				# box coordinates and then start the dlib correlation
@@ -183,6 +183,7 @@ while True:
 			startY = int(pos.top())
 			endX = int(pos.right())
 			endY = int(pos.bottom())
+			print((startX, startY, endX, endY))
 
 			# add the bounding box coordinates to the rectangles list
 			rects.append((startX, startY, endX, endY))
