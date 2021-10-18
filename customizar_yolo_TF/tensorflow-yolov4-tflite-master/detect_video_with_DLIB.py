@@ -205,6 +205,7 @@ def main(_argv):
         count_mat = count_mat + 1
         if count_mat > 0:
             print("FPS: %.2f" % fps)
+            print("Numero Laranjas: %i" % int(ct.nextObjectID-1))
             count_mat = 0
         result = np.asarray(image)
         #cv2.namedWindow("result", cv2.WINDOW_AUTOSIZE)
@@ -221,7 +222,7 @@ def main(_argv):
 if __name__ == '__main__':
     ct = CentroidTracker(maxDisappeared=33, maxDistance=25)
     trackers = []
-    skip_frames = 10
+    skip_frames = 3
     confidence_filter = 0.75
     try:
         app.run(main)
