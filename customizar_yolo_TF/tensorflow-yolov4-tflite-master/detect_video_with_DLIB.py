@@ -12,6 +12,7 @@ from core.yolov4 import filter_boxes
 from tensorflow.python.saved_model import tag_constants
 from PIL import Image
 import cv2
+import dlib
 import numpy as np
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
@@ -134,12 +135,14 @@ def main(_argv):
                 if confidence > confidence_filter:
                     #extrai as coordenadas das caixas delimitadoras
                     box = pred_bbox[0][0][i]
-                    (startX, startY, endX, endY) = box
+                    #(startX, startY, endX, endY) = box
+                    (startY, startX, endY, endX) = box
 
                     rects.append((startX, startY, endX, endY))
 
                     #aplica rastreador da biblioteca Dlib
-                    tracker = dlib.rectangle(startX, startY, endX, endY)
+                    tracker = dlib.correlation_tracker()
+                    rect = dlib.rectangle(startX, startY, endX, endY)
                     tracker.start_track(rgb, rect)
 
                     #adiciona os rastreadores para a lisa dos rastreadores
@@ -200,7 +203,7 @@ def main(_argv):
         fps = 1.0 / (time.time() - start_time)
             
         count_mat = count_mat + 1
-        if count_mat > 60:
+        if count_mat > 0:
             print("FPS: %.2f" % fps)
             count_mat = 0
         result = np.asarray(image)

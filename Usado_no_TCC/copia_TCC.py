@@ -89,9 +89,9 @@ while True:
                 rects.append((startX, startY, endX, endY))
 
 
-
                 #aplica rastreador da biblioteca Dlib
-                tracker = dlib.rectangle(startX, startY, endX, endY)
+                tracker = dlib.correlation_tracker()
+                rect = dlib.rectangle(startX, startY, endX, endY)
                 tracker.start_track(rgb, rect)
 
                 #adiciona os rastreadores para a lisa dos rastreadores
