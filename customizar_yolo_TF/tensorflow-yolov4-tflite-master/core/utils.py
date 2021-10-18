@@ -171,6 +171,21 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed
                             fontScale, (0, 0, 0), bbox_thick // 2, lineType=cv2.LINE_AA)
     return image
 
+def draw_bbox_tracker(image, objects, rects):
+    image_h, image_w, _ = image.shape
+    corBox = (255, 255, 255)
+    for (objectID, centroid) in objects.items():
+        #desenhe o Id do objeto e o seu centroide no frame
+        text = "ID {}".format(objectID)
+        cv2.putText(image, text, (centroid[0] - 10, centroid[1] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+        cv2.circle(image, (centroid[0], centroid[1]), 2, (0, 255, 0), -1)
+    # desenhe as caixas delimitadoras no frame
+    for rect in rects:
+        cv2.rectangle(image, (rect[0], rect[1]), (rect[2], rect[3]), corBox, 1)
+
+    return image
+
 def bbox_iou(bboxes1, bboxes2):
     """
     @param bboxes1: (a, b, ..., 4)

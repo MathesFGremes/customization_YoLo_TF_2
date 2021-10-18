@@ -113,7 +113,7 @@ while True:
             endY = int(pos.bottom())
 
             #adiciona a caixa delimitadora para a lista
-            rects. append((startX, startY, endX, endY))
+            rects.append((startX, startY, endX, endY))
 
     # atualiza os objetos do algoritmo de rastreamento de centroides
     objects = ct.update(rects)

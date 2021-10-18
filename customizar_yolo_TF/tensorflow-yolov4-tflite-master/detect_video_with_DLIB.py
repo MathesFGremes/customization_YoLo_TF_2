@@ -100,7 +100,10 @@ def main(_argv):
                 pred_conf = value[:, :, 4:]
         
         ## IGUAL TCC
+        rects = []
+        flag_detection = 0
         if totalFrames % skip_frames == 0:
+            flag_detection = 1
             # Inicializa a nova variavel de rastreador de objetos
             trackers = []
             ###################### DETECCAO YOLO V4 ######################## inicio
@@ -114,6 +117,14 @@ def main(_argv):
                 score_threshold=FLAGS.score
             )
             pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
+            image_h, image_w, _ = frame.shape
+            for i in range(pred_bbox[3][0]):
+                coor = pred_bbox[0][0][i]
+                coor[0] = int(coor[0] * image_h)
+                coor[2] = int(coor[2] * image_h)
+                coor[1] = int(coor[1] * image_w)
+                coor[3] = int(coor[3] * image_w)
+                pred_bbox[0][0][i] = coor
             ###################### DETECCAO YOLO V4 ######################## fim
             for i in range(pred_bbox[3][0]):
                 # extrai a confiança da predição
@@ -121,26 +132,47 @@ def main(_argv):
 
                 # filtra predições com baixa condiança
                 if confidence > confidence_filter:
-            '''
-            ###################### APENAS PARA SABER O CONTEUDO DA DETECCAO ########## inicio
-            image_h, image_w, _ = frame.shape
-            for i in range(pred_bbox[3][0]):
-                coor = pred_bbox[0][0][i]
-                #coor[0] = int(coor[0] * image_h)
-                #coor[2] = int(coor[2] * image_h)
-                #coor[1] = int(coor[1] * image_w)
-                #coor[3] = int(coor[3] * image_w)
+                    #extrai as coordenadas das caixas delimitadoras
+                    box = pred_bbox[0][0][i]
+                    (startX, startY, endX, endY) = box
 
-                print(coor[0], coor[2], coor[1], coor[3])
-                #print(pred_bbox[0][0][i], pred_bbox[1][0][i], pred_bbox[2][0][i])
-            print(pred_bbox[3][0])
-            print(image_h, image_w)
-            print()
-            ###################### APENAS PARA SABER O CONTEUDO DA DETECCAO ########## fim
-            '''
+                    rects.append((startX, startY, endX, endY))
+
+                    #aplica rastreador da biblioteca Dlib
+                    tracker = dlib.rectangle(startX, startY, endX, endY)
+                    tracker.start_track(rgb, rect)
+
+                    #adiciona os rastreadores para a lisa dos rastreadores
+                    trackers.append(tracker)
+        #se o detector de objetos não for ser utilizado, utilizara o
+        #rastreador de objetos
+        else:
+            #corBox = (255, 255, 0)
+            for tracker in trackers:
+                #atualiza as caixas delimitadoras do rastreador de objetos
+                sc = tracker.update(rgb)
+                pos = tracker.get_position()
+
+                #obtem a nova posição do objeto
+                startX = int(pos.left())
+                startY = int(pos.top())
+                endX = int(pos.right())
+                endY = int(pos.bottom())
+
+                #adiciona a caixa delimitadora para a lista
+                rects.append((startX, startY, endX, endY))
+        # atualiza os objetos do algoritmo de rastreamento de centroides
+        objects = ct.update(rects)
+        totalFrames += 1
+        if flag_detection == 1:
+            image = utils.draw_bbox(frame, pred_bbox)
+        else:
+            image = utils.draw_bbox_tracker(frame, objects, rects)        
+
         
         
-        image = utils.draw_bbox(frame, pred_bbox)
+        
+        
         #print(pred_bbox[0].size)
         #print(pred_bbox[1])
         #print(pred_bbox[2])
