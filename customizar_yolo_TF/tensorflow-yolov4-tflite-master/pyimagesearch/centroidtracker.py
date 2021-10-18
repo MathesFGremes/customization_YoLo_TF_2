@@ -2,6 +2,7 @@
 from scipy.spatial import distance as dist
 from collections import OrderedDict
 import numpy as np
+import random
 
 class CentroidTracker:
 	def __init__(self, maxDisappeared=50, maxDistance=50):
@@ -11,6 +12,7 @@ class CentroidTracker:
 		# been marked as "disappeared", respectively
 		self.nextObjectID = 0
 		self.objects = OrderedDict()
+		self.color = OrderedDict()
 		self.disappeared = OrderedDict()
 
 		# store the number of maximum consecutive frames a given
@@ -27,6 +29,7 @@ class CentroidTracker:
 		# when registering an object we use the next available object
 		# ID to store the centroid
 		self.objects[self.nextObjectID] = centroid
+		self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
 		self.disappeared[self.nextObjectID] = 0
 		self.nextObjectID += 1
 
@@ -35,6 +38,7 @@ class CentroidTracker:
 		# both of our respective dictionaries
 		del self.objects[objectID]
 		del self.disappeared[objectID]
+		del self.color[objectID]
 
 	def update(self, rects):
 		# check to see if the list of input bounding box rectangles
