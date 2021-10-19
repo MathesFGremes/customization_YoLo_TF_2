@@ -166,11 +166,12 @@ def main(_argv):
                 rects.append((startX, startY, endX, endY))
         # atualiza os objetos do algoritmo de rastreamento de centroides
         objects = ct.update(rects)
+        colors = ct.color
         totalFrames += 1
         if flag_detection == 1:
             image = utils.draw_bbox(frame, pred_bbox)
         else:
-            image = utils.draw_bbox_tracker(frame, objects, rects)        
+            image = utils.draw_bbox_tracker(frame, objects, rects, colors)        
 
         
         
