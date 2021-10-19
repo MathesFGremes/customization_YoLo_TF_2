@@ -102,8 +102,9 @@ def main(_argv):
         
         ## IGUAL TCC
         rects = []
+        flag_ambos = 1
         flag_detection = 0
-        if totalFrames % skip_frames == 0:
+        if (totalFrames % skip_frames == 0) or (flag_ambos == 1):
             flag_detection = 1
             # Inicializa a nova variavel de rastreador de objetos
             trackers = []
@@ -139,17 +140,18 @@ def main(_argv):
                     (startY, startX, endY, endX) = box
 
                     rects.append((startX, startY, endX, endY))
+                    if flag_ambos == 0:
+                        #aplica rastreador da biblioteca Dlib
+                        tracker = dlib.correlation_tracker()
+                        rect = dlib.rectangle(startX, startY, endX, endY)
+                        tracker.start_track(rgb, rect)
 
-                    #aplica rastreador da biblioteca Dlib
-                    tracker = dlib.correlation_tracker()
-                    rect = dlib.rectangle(startX, startY, endX, endY)
-                    tracker.start_track(rgb, rect)
-
-                    #adiciona os rastreadores para a lisa dos rastreadores
-                    trackers.append(tracker)
+                        #adiciona os rastreadores para a lisa dos rastreadores
+                        trackers.append(tracker)
         #se o detector de objetos não for ser utilizado, utilizara o
         #rastreador de objetos
-        else:
+        #else:
+        if (totalFrames % skip_frames != 0) or (flag_ambos == 0):
             #corBox = (255, 255, 0)
             for tracker in trackers:
                 #atualiza as caixas delimitadoras do rastreador de objetos
@@ -168,11 +170,12 @@ def main(_argv):
         objects = ct.update(rects)
         colors = ct.color
         totalFrames += 1
-        if flag_detection == 1:
-            image = utils.draw_bbox(frame, pred_bbox)
-        else:
-            image = utils.draw_bbox_tracker(frame, objects, rects, colors)        
-
+        #if flag_detection == 1:
+        #    image = utils.draw_bbox(frame, pred_bbox)
+        #else:
+        #    image = utils.draw_bbox_tracker(frame, objects, rects, colors)        
+        image = utils.draw_bbox(frame, pred_bbox)
+        image = utils.draw_bbox_tracker(image, objects, rects, colors)        
         
         
         
@@ -221,9 +224,9 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ct = CentroidTracker(maxDisappeared=33, maxDistance=25)
+    ct = CentroidTracker(maxDisappeared=10, maxDistance=25)
     trackers = []
-    skip_frames = 3
+    skip_frames = 2
     confidence_filter = 0.75
     try:
         app.run(main)
