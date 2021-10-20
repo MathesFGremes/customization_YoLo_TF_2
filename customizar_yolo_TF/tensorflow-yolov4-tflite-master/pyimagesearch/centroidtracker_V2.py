@@ -6,7 +6,7 @@ import random
 import dlib
 
 class CentroidTracker:
-	def __init__(self, maxDisappeared=50, maxDistance=50, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True):
+	def __init__(self, maxDisappeared=50, maxDistance=50, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True, flagBeirada = True):
 		# initialize the next unique object ID along with two ordered
 		# dictionaries used to keep track of mapping a given object
 		# ID to its centroid and number of consecutive frames it has
@@ -21,11 +21,13 @@ class CentroidTracker:
 		
 		self.frameAtual = []
 		self.frameAnterior = []
+		self.percentBeirada = 0.02
 
 		self.averageS = 0
 		self.flagTracker = flagTracker
 		self.flagVelocitMoment = flagVelocitMoment
 		self.flagInputGreater = flagInputGreater
+		self.flagBeirada = flagBeirada
 
 		# store the number of maximum consecutive frames a given
 		# object is allowed to be marked as "disappeared" until we
@@ -40,13 +42,27 @@ class CentroidTracker:
 	def register(self, centroid, boundingBox):
 		# when registering an object we use the next available object
 		# ID to store the centroid
-		self.objects[self.nextObjectID] = centroid
-		self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-		self.boundingB[self.nextObjectID] = boundingBox
-		self.disappeared[self.nextObjectID] = 0
-		self.relativeV[self.nextObjectID] = []
-		self.trackerDLIB[self.nextObjectID] = []
-		self.nextObjectID += 1
+		if self.flagBeirada:
+			beirada = int(self.image_wy*(self.percentBeirada))
+			beiradaInicio = beirada
+			beiradaFim = self.image_wy - beirada
+			cy = centroid[0]
+			if (cy > beiradaInicio) and (cy < beiradaFim):
+				self.objects[self.nextObjectID] = centroid
+				self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+				self.boundingB[self.nextObjectID] = boundingBox
+				self.disappeared[self.nextObjectID] = 0
+				self.relativeV[self.nextObjectID] = []
+				self.trackerDLIB[self.nextObjectID] = []
+				self.nextObjectID += 1
+		else:
+			self.objects[self.nextObjectID] = centroid
+			self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+			self.boundingB[self.nextObjectID] = boundingBox
+			self.disappeared[self.nextObjectID] = 0
+			self.relativeV[self.nextObjectID] = []
+			self.trackerDLIB[self.nextObjectID] = []
+			self.nextObjectID += 1
 
 	def deregister(self, objectID):
 		# to deregister an object ID we delete the object ID from
@@ -93,6 +109,27 @@ class CentroidTracker:
 			#print(self.objects[key])
 			#print()
 	
+	def deletaTrackingBeirada(self):
+		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
+		print("rastreando: ", len(keyDisappeared))
+		#beirada = int(self.image_wy*(0.0162))
+		
+		beirada = int(self.image_wy*(self.percentBeirada))
+		beiradaInicio = beirada
+		beiradaFim = self.image_wy - beirada
+		#print("image_wy: ", self.image_wy)
+		#print("image_hx: ", self.image_hx)
+		#print("beiradaInicio: ", beiradaInicio)
+		#print("beiradaFim: ", beiradaFim)
+		#print()
+		for key in keyDisappeared:
+			cy = self.objects[key][0]
+			#print("key: ", key)
+			#print("cy: ", cy)
+			
+			if (cy < beiradaInicio) or (cy > beiradaFim):
+				self.deregister(key)
+
 	def firstTracking(self, idC):
 		self.trackerDLIB[idC] = dlib.correlation_tracker()
 		rect = dlib.rectangle(self.boundingB[idC][0], self.boundingB[idC][1],
@@ -135,6 +172,10 @@ class CentroidTracker:
 
 
 	def update(self, rects, frame = []):
+		if len(frame) > 0:
+			image_hx, image_wy, _ = frame.shape
+			self.image_hx = image_hx
+			self.image_wy = image_wy
 		self.frameAnterior = self.frameAtual
 		self.frameAtual = frame
 		boundingBoxs = OrderedDict()
@@ -153,6 +194,14 @@ class CentroidTracker:
 				# missing, deregister it
 				if self.disappeared[objectID] > self.maxDisappeared:
 					self.deregister(objectID)
+
+			if (self.flagVelocitMoment)and(not(self.flagTracker)):
+				self.momentLost()
+			else: 
+				if self.flagTracker:
+					self.utilizeTrackingDLIB()
+			if self.flagBeirada:
+				self.deletaTrackingBeirada()
 
 			# return early as there are no centroids or tracking info
 			# to update
@@ -293,6 +342,8 @@ class CentroidTracker:
 		else: 
 			if self.flagTracker:
 				self.utilizeTrackingDLIB()
+		if self.flagBeirada:
+			self.deletaTrackingBeirada()
 
 		# return the set of trackable objects
 		return self.objects
