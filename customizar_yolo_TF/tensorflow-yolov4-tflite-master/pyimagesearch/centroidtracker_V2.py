@@ -50,10 +50,14 @@ class CentroidTracker:
 		keyVelocit = list({key for key in self.relativeV if (len(self.relativeV[key]) > 0)})
 		
 		average = 0
+		#print()
+		#print(average)
 		for key in keyVelocit:
 			average += self.relativeV[key]
+			#print(average)
 		if len(keyVelocit) > 0:
 			self.averageS = average/len(keyVelocit)
+			#print(self.averageS)
 	
 	def momentLost(self):
 		self.averageSpeed()
@@ -62,7 +66,7 @@ class CentroidTracker:
 		for key in keyDisappeared:
 			#print(key)
 			#print(self.objects[key])
-			self.objects[key] = self.objects[key] + self.averageS
+			self.objects[key] = (self.objects[key] + self.averageS).astype(int)
 			#print(self.objects[key])
 			#print()
 
@@ -203,7 +207,7 @@ class CentroidTracker:
 
 if __name__ == '__main__':
 	rects = []
-	ct = CentroidTracker(maxDisappeared=25, maxDistance=50)
+	ct = CentroidTracker(maxDisappeared=50, maxDistance=50)
 	for i in np.arange(10):
 		j = i*10
 		rects.append((j, j, j+2, j+2))
@@ -217,13 +221,32 @@ if __name__ == '__main__':
 	rects= []
 	for i in np.arange(5):
 		j = i*10
-		m = i*1.5
-		rects.append((j+m, j+m, j+2+m, j+2+m))
+		m = 7
+		h = 3
+		rects.append((j+m, j+m, j+2-h, j+2-h))
 	
 	ct.update(rects)
 	print(ct.objects)
 	print(ct.disappeared)
 	print(ct.relativeV)
+
+	print()
+	print(ct.averageS)
+
+	rects= []
+	for i in np.arange(5):
+		j = i*10
+		m = 15
+		h = 19
+		rects.append((j+m, j+m, j+2-h, j+2-h))
+	
+	ct.update(rects)
+	print(ct.objects)
+	print(ct.disappeared)
+	print(ct.relativeV)
+
+	print()
+	print(ct.averageS)
 
 	#keyVelocit = list({key for key in ct.relativeV if (len(ct.relativeV[key]) > 0)})
 	#print(keyVelocit)
