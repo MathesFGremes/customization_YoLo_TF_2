@@ -172,7 +172,7 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed
                             fontScale, (0, 0, 0), bbox_thick // 2, lineType=cv2.LINE_AA)
     return image
 
-def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox):
+def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox, totalObjetos = [], fps = []):
     image_h, image_w, _ = image.shape
     corBox = (255, 255, 255)
     for (objectID, centroid) in objects.items():
@@ -193,6 +193,16 @@ def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox):
         cv2.rectangle(image, (bBox[0], bBox[1]), (bBox[2], bBox[3]), corBox, 1)
     #for rect in rects:
     #    cv2.rectangle(image, (rect[0], rect[1]), (rect[2], rect[3]), corBox, 1)
+    if totalObjetos != []:
+        texto = "Total Laranjas: {}".format(totalObjetos)
+        cv2.putText(image, texto, (15, 30),
+            cv2.FONT_HERSHEY_SIMPLEX, 1.1, (255, 0, 0), 2)
+    
+    if fps != []:
+        texto = "FPS: %.2f" % fps
+        cv2.putText(image, texto, (15, 70),
+            cv2.FONT_HERSHEY_SIMPLEX, 1.1, (255, 0, 0), 2)
+
 
     return image
 
