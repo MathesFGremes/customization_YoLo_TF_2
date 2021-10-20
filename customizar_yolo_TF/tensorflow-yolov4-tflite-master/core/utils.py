@@ -172,7 +172,7 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed
                             fontScale, (0, 0, 0), bbox_thick // 2, lineType=cv2.LINE_AA)
     return image
 
-def draw_bbox_tracker(image, objects, rects, colors, disappeared):
+def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox):
     image_h, image_w, _ = image.shape
     corBox = (255, 255, 255)
     for (objectID, centroid) in objects.items():
@@ -189,8 +189,10 @@ def draw_bbox_tracker(image, objects, rects, colors, disappeared):
             cv2.circle(image, (centroid[0], centroid[1]), 5, (0,0,0), -1)
             cv2.circle(image, (centroid[0], centroid[1]), 4, (255,255,255), -1)
     # desenhe as caixas delimitadoras no frame
-    for rect in rects:
-        cv2.rectangle(image, (rect[0], rect[1]), (rect[2], rect[3]), corBox, 1)
+    for (objectID, bBox) in BoundinBox.items():
+        cv2.rectangle(image, (bBox[0], bBox[1]), (bBox[2], bBox[3]), corBox, 1)
+    #for rect in rects:
+    #    cv2.rectangle(image, (rect[0], rect[1]), (rect[2], rect[3]), corBox, 1)
 
     return image
 

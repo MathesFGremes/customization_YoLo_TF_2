@@ -134,7 +134,7 @@ def main(_argv):
                 #extrai as coordenadas das caixas delimitadoras
                 box = pred_bbox[0][0][i]
                 #(startX, startY, endX, endY) = box
-                (startY, startX, endY, endX) = box
+                (startY, startX, endY, endX) = box # feito dessa forma para dar certo
 
                 rects.append((startX, startY, endX, endY))
 
@@ -143,6 +143,7 @@ def main(_argv):
         objects = ct.update(rects)
         colors = ct.color
         desap = ct.disappeared
+        BoundinBoxCt = ct.boundingB
         totalFrames += 1
         '''
         velocitRelative = ct.relativeV
@@ -158,7 +159,7 @@ def main(_argv):
         print(totalV)
         '''
         image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
-        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap)        
+        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt)        
         
         
         ##### como ter todas as posições das BB detectadas pela YoLo ####

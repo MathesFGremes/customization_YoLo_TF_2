@@ -3,20 +3,27 @@ from scipy.spatial import distance as dist
 from collections import OrderedDict
 import numpy as np
 import random
+import dlib
 
 class CentroidTracker:
-	def __init__(self, maxDisappeared=50, maxDistance=50, flagVelocitMoment = True, flagInputGreater = True):
+	def __init__(self, maxDisappeared=50, maxDistance=50, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True):
 		# initialize the next unique object ID along with two ordered
 		# dictionaries used to keep track of mapping a given object
 		# ID to its centroid and number of consecutive frames it has
 		# been marked as "disappeared", respectively
 		self.nextObjectID = 0
 		self.objects = OrderedDict()
+		self.boundingB = OrderedDict()
 		self.color = OrderedDict()
 		self.relativeV = OrderedDict()
+		self.trackerDLIB = OrderedDict()
 		self.disappeared = OrderedDict()
+		
+		self.frameAtual = []
+		self.frameAnterior = []
 
 		self.averageS = 0
+		self.flagTracker = flagTracker
 		self.flagVelocitMoment = flagVelocitMoment
 		self.flagInputGreater = flagInputGreater
 
@@ -30,22 +37,26 @@ class CentroidTracker:
 		# distance we'll start to mark the object as "disappeared"
 		self.maxDistance = maxDistance
 
-	def register(self, centroid):
+	def register(self, centroid, boundingBox):
 		# when registering an object we use the next available object
 		# ID to store the centroid
 		self.objects[self.nextObjectID] = centroid
 		self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+		self.boundingB[self.nextObjectID] = boundingBox
 		self.disappeared[self.nextObjectID] = 0
 		self.relativeV[self.nextObjectID] = []
+		self.trackerDLIB[self.nextObjectID] = []
 		self.nextObjectID += 1
 
 	def deregister(self, objectID):
 		# to deregister an object ID we delete the object ID from
 		# both of our respective dictionaries
 		del self.objects[objectID]
+		del self.boundingB[objectID]
 		del self.disappeared[objectID]
 		del self.color[objectID]
 		del self.relativeV[objectID]
+		del self.trackerDLIB[objectID]
 
 	def averageSpeed(self):
 		keyVelocit = list({key for key in self.relativeV if (len(self.relativeV[key]) > 0)})
@@ -68,10 +79,58 @@ class CentroidTracker:
 			#print(key)
 			#print(self.objects[key])
 			self.objects[key] = (self.objects[key] + self.averageS).astype(int)
+			### soma em X
+			#self.boundingB[key][0] = (self.boundingB[key][0] + self.averageS[0]).astype(int)
+			#self.boundingB[key][2] = (self.boundingB[key][2] + self.averageS[0]).astype(int)
+			### soma em Y
+			#self.boundingB[key][1] = (self.boundingB[key][1] + self.averageS[1]).astype(int)
+			#self.boundingB[key][3] = (self.boundingB[key][3] + self.averageS[1]).astype(int)
+			box = ((self.boundingB[key][0] + self.averageS[0]).astype(int),
+				   (self.boundingB[key][1] + self.averageS[1]).astype(int),
+				   (self.boundingB[key][2] + self.averageS[0]).astype(int),
+				   (self.boundingB[key][3] + self.averageS[1]).astype(int))
+			self.boundingB[key] = box
 			#print(self.objects[key])
 			#print()
+	
+	def firstTracking(self, idC):
+		self.trackerDLIB[idC] = dlib.correlation_tracker()
+		rect = dlib.rectangle(self.boundingB[idC][0], self.boundingB[idC][1],
+							  self.boundingB[idC][2], self.boundingB[idC][3])
+		self.trackerDLIB[idC].start_track(self.frameAnterior, rect)
 
-	def update(self, rects):
+	def utilizeTrackingDLIB(self):
+		#for tracker in trackers:
+        #        #atualiza as caixas delimitadoras do rastreador de objetos
+        #        sc = tracker.update(rgb)
+        #        pos = tracker.get_position()
+		#
+        #        #obtem a nova posição do objeto
+        #        startX = int(pos.left())
+        #        startY = int(pos.top())
+        #        endX = int(pos.right())
+        #        endY = int(pos.bottom())
+		#
+        #        #adiciona a caixa delimitadora para a lista
+        #        rects.append((startX, startY, endX, endY))
+		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] == 1)})
+		for key in keyDisappeared:
+			self.firstTracking(key)
+
+		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
+		for key in keyDisappeared:
+			sc = self.trackerDLIB.update(self.frameAtual)
+			pos = self.trackerDLIB.get_position()
+
+			startX = int(pos.left())
+			startY = int(pos.top())
+			endX = int(pos.right())
+			endY = int(pos.bottom())
+
+	def update(self, rects, frame = []):
+		self.frameAnterior = self.frameAtual
+		self.frameAtual = frame
+		boundingBoxs = OrderedDict()
 		# check to see if the list of input bounding box rectangles
 		# is empty
 		if len(rects) == 0:
@@ -100,12 +159,13 @@ class CentroidTracker:
 			cX = int((startX + endX) / 2.0)
 			cY = int((startY + endY) / 2.0)
 			inputCentroids[i] = (cX, cY)
+			boundingBoxs[tuple(inputCentroids[i])] = (startX, startY, endX, endY)
 
 		# if we are currently not tracking any objects take the input
 		# centroids and register each of them
 		if len(self.objects) == 0:
 			for i in range(0, len(inputCentroids)):
-				self.register(inputCentroids[i])
+				self.register(inputCentroids[i], boundingBoxs[tuple(inputCentroids[i])])
 
 		# otherwise, are are currently tracking objects so we need to
 		# try to match the input centroids to existing object
@@ -161,6 +221,7 @@ class CentroidTracker:
 				objectID = objectIDs[row]
 				self.relativeV[objectID] = inputCentroids[col] - self.objects[objectID]
 				self.objects[objectID] = inputCentroids[col]
+				self.boundingB[objectID] = boundingBoxs[tuple(inputCentroids[col])]
 				self.disappeared[objectID] = 0
 
 				# indicate that we have examined each of the row and
@@ -198,7 +259,7 @@ class CentroidTracker:
 				# register each new input centroid as a trackable object
 				else:
 					for col in unusedCols:
-						self.register(inputCentroids[col])
+						self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])])
 			else:
 				if D.shape[0] >= D.shape[1]:
 					# loop over the unused row indexes
@@ -215,7 +276,7 @@ class CentroidTracker:
 						if self.disappeared[objectID] > self.maxDisappeared:
 							self.deregister(objectID)
 				for col in unusedCols:
-					self.register(inputCentroids[col])
+					self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])])
 
 		# comput the average velocit in objects that are desapered
 		if self.flagVelocitMoment:
@@ -232,9 +293,10 @@ if __name__ == '__main__':
 		rects.append((j, j, j+2, j+2))
 	
 	ct.update(rects)
-	print(ct.objects)
-	print(ct.disappeared)
-	print(ct.relativeV)
+	print("Centroids: ", ct.objects)
+	print("BBox: ", ct.boundingB)
+	print("disappered: ", ct.disappeared)
+	print("velocidade relativa: ", ct.relativeV)
 	print()
 
 	rects= []
@@ -245,12 +307,13 @@ if __name__ == '__main__':
 		rects.append((j+m, j+m, j+2-h, j+2-h))
 	
 	ct.update(rects)
-	print(ct.objects)
-	print(ct.disappeared)
-	print(ct.relativeV)
+	print("Centroids: ", ct.objects)
+	print("BBox: ", ct.boundingB)
+	print("disappered: ", ct.disappeared)
+	print("velocidade relativa: ", ct.relativeV)
 
 	print()
-	print(ct.averageS)
+	print("velocidade media", ct.averageS)
 
 	rects= []
 	for i in np.arange(5):
@@ -260,12 +323,13 @@ if __name__ == '__main__':
 		rects.append((j+m, j+m, j+2-h, j+2-h))
 	
 	ct.update(rects)
-	print(ct.objects)
-	print(ct.disappeared)
-	print(ct.relativeV)
+	print("Centroids: ", ct.objects)
+	print("BBox: ", ct.boundingB)
+	print("disappered: ", ct.disappeared)
+	print("velocidade relativa: ", ct.relativeV)
 
 	print()
-	print(ct.averageS)
+	print("velocidade media", ct.averageS)
 
 	#keyVelocit = list({key for key in ct.relativeV if (len(ct.relativeV[key]) > 0)})
 	#print(keyVelocit)
