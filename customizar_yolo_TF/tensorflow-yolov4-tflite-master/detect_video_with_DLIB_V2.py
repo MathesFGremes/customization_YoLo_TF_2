@@ -142,6 +142,7 @@ def main(_argv):
         # atualiza os objetos do algoritmo de rastreamento de centroides
         objects = ct.update(rects)
         colors = ct.color
+        desap = ct.disappeared
         totalFrames += 1
         '''
         velocitRelative = ct.relativeV
@@ -156,8 +157,8 @@ def main(_argv):
             totalV = totalV/numberV
         print(totalV)
         '''
-        image = utils.draw_bbox(frame, pred_bbox)
-        image = utils.draw_bbox_tracker(image, objects, rects, colors)        
+        image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
+        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap)        
         
         
         ##### como ter todas as posições das BB detectadas pela YoLo ####
@@ -182,7 +183,7 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ct = CentroidTracker(maxDisappeared=25, maxDistance=25)
+    ct = CentroidTracker(maxDisappeared=25, maxDistance=25, flagInputGreater=False)
     trackers = []
     skip_frames = 2
     confidence_filter = 0.75

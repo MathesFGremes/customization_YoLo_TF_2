@@ -5,7 +5,7 @@ import numpy as np
 import random
 
 class CentroidTracker:
-	def __init__(self, maxDisappeared=50, maxDistance=50, flagVelocitMoment = 1):
+	def __init__(self, maxDisappeared=50, maxDistance=50, flagVelocitMoment = True, flagInputGreater = True):
 		# initialize the next unique object ID along with two ordered
 		# dictionaries used to keep track of mapping a given object
 		# ID to its centroid and number of consecutive frames it has
@@ -18,6 +18,7 @@ class CentroidTracker:
 
 		self.averageS = 0
 		self.flagVelocitMoment = flagVelocitMoment
+		self.flagInputGreater = flagInputGreater
 
 		# store the number of maximum consecutive frames a given
 		# object is allowed to be marked as "disappeared" until we
@@ -171,35 +172,53 @@ class CentroidTracker:
 			# examined
 			unusedRows = set(range(0, D.shape[0])).difference(usedRows)
 			unusedCols = set(range(0, D.shape[1])).difference(usedCols)
+			
+			if self.flagInputGreater: #################################### FICA LIGADO AQUI QUE EU FIZ UMA BAGUNÇA
+				# in the event that the number of object centroids is
+				# equal or greater than the number of input centroids
+				# we need to check and see if some of these objects have
+				# potentially disappeared
+				if D.shape[0] >= D.shape[1]:
+					# loop over the unused row indexes
+					for row in unusedRows:
+						# grab the object ID for the corresponding row
+						# index and increment the disappeared counter
+						objectID = objectIDs[row]
+						self.disappeared[objectID] += 1
+						self.relativeV[objectID] = []
 
-			# in the event that the number of object centroids is
-			# equal or greater than the number of input centroids
-			# we need to check and see if some of these objects have
-			# potentially disappeared
-			if D.shape[0] >= D.shape[1]:
-				# loop over the unused row indexes
-				for row in unusedRows:
-					# grab the object ID for the corresponding row
-					# index and increment the disappeared counter
-					objectID = objectIDs[row]
-					self.disappeared[objectID] += 1
-					self.relativeV[objectID] = []
+						# check to see if the number of consecutive
+						# frames the object has been marked "disappeared"
+						# for warrants deregistering the object
+						if self.disappeared[objectID] > self.maxDisappeared:
+							self.deregister(objectID)
 
-					# check to see if the number of consecutive
-					# frames the object has been marked "disappeared"
-					# for warrants deregistering the object
-					if self.disappeared[objectID] > self.maxDisappeared:
-						self.deregister(objectID)
-
-			# otherwise, if the number of input centroids is greater
-			# than the number of existing object centroids we need to
-			# register each new input centroid as a trackable object
+				# otherwise, if the number of input centroids is greater
+				# than the number of existing object centroids we need to
+				# register each new input centroid as a trackable object
+				else:
+					for col in unusedCols:
+						self.register(inputCentroids[col])
 			else:
+				if D.shape[0] >= D.shape[1]:
+					# loop over the unused row indexes
+					for row in unusedRows:
+						# grab the object ID for the corresponding row
+						# index and increment the disappeared counter
+						objectID = objectIDs[row]
+						self.disappeared[objectID] += 1
+						self.relativeV[objectID] = []
+
+						# check to see if the number of consecutive
+						# frames the object has been marked "disappeared"
+						# for warrants deregistering the object
+						if self.disappeared[objectID] > self.maxDisappeared:
+							self.deregister(objectID)
 				for col in unusedCols:
 					self.register(inputCentroids[col])
 
 		# comput the average velocit in objects that are desapered
-		if self.flagVelocitMoment == 1:
+		if self.flagVelocitMoment:
 			self.momentLost()
 
 		# return the set of trackable objects

@@ -124,7 +124,7 @@ def image_preprocess(image, target_size, gt_boxes=None):
         gt_boxes[:, [1, 3]] = gt_boxes[:, [1, 3]] * scale + dh
         return image_paded, gt_boxes
 
-def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed_classes=list(read_class_names(cfg.YOLO.CLASSES).values()), show_label=True):
+def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed_classes=list(read_class_names(cfg.YOLO.CLASSES).values()), show_label=True, show_BB=True):
     num_classes = len(classes)
     image_h, image_w, _ = image.shape
     hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
@@ -159,7 +159,8 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed
             bbox_color = colors[class_ind]
             bbox_thick = int(0.1 * (image_h + image_w) / 1000)
             c1, c2 = (coor[1], coor[0]), (coor[3], coor[2])
-            cv2.rectangle(image, c1, c2, bbox_color, bbox_thick)
+            if show_BB:
+                cv2.rectangle(image, c1, c2, bbox_color, bbox_thick)
 
             if show_label:
                 bbox_mess = '%.2f' % (score)
@@ -171,7 +172,7 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed
                             fontScale, (0, 0, 0), bbox_thick // 2, lineType=cv2.LINE_AA)
     return image
 
-def draw_bbox_tracker(image, objects, rects, colors):
+def draw_bbox_tracker(image, objects, rects, colors, disappeared):
     image_h, image_w, _ = image.shape
     corBox = (255, 255, 255)
     for (objectID, centroid) in objects.items():
@@ -181,6 +182,12 @@ def draw_bbox_tracker(image, objects, rects, colors):
             cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
         #cv2.circle(image, (centroid[0], centroid[1]), 2, (0, 255, 0), -1)
         cv2.circle(image, (centroid[0], centroid[1]), 10, colors[objectID], -1)
+        if disappeared[objectID] == 0:
+            cv2.circle(image, (centroid[0], centroid[1]), 5, (255,255,255), -1)
+            cv2.circle(image, (centroid[0], centroid[1]), 4, (0,0,0), -1)
+        else:
+            cv2.circle(image, (centroid[0], centroid[1]), 5, (0,0,0), -1)
+            cv2.circle(image, (centroid[0], centroid[1]), 4, (255,255,255), -1)
     # desenhe as caixas delimitadoras no frame
     for rect in rects:
         cv2.rectangle(image, (rect[0], rect[1]), (rect[2], rect[3]), corBox, 1)
