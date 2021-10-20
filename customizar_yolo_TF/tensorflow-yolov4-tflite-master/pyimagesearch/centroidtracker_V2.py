@@ -5,7 +5,7 @@ import numpy as np
 import random
 
 class CentroidTracker:
-	def __init__(self, maxDisappeared=50, maxDistance=50):
+	def __init__(self, maxDisappeared=50, maxDistance=50, flagVelocitMoment = 1):
 		# initialize the next unique object ID along with two ordered
 		# dictionaries used to keep track of mapping a given object
 		# ID to its centroid and number of consecutive frames it has
@@ -13,7 +13,11 @@ class CentroidTracker:
 		self.nextObjectID = 0
 		self.objects = OrderedDict()
 		self.color = OrderedDict()
+		self.relativeV = OrderedDict()
 		self.disappeared = OrderedDict()
+
+		self.averageS = 0
+		self.flagVelocitMoment = flagVelocitMoment
 
 		# store the number of maximum consecutive frames a given
 		# object is allowed to be marked as "disappeared" until we
@@ -31,6 +35,7 @@ class CentroidTracker:
 		self.objects[self.nextObjectID] = centroid
 		self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
 		self.disappeared[self.nextObjectID] = 0
+		self.relativeV[self.nextObjectID] = []
 		self.nextObjectID += 1
 
 	def deregister(self, objectID):
@@ -39,6 +44,27 @@ class CentroidTracker:
 		del self.objects[objectID]
 		del self.disappeared[objectID]
 		del self.color[objectID]
+		del self.relativeV[objectID]
+
+	def averageSpeed(self):
+		keyVelocit = list({key for key in self.relativeV if (len(self.relativeV[key]) > 0)})
+		
+		average = 0
+		for key in keyVelocit:
+			average += self.relativeV[key]
+		if len(keyVelocit) > 0:
+			self.averageS = average/len(keyVelocit)
+	
+	def momentLost(self):
+		self.averageSpeed()
+		
+		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
+		for key in keyDisappeared:
+			#print(key)
+			#print(self.objects[key])
+			self.objects[key] = self.objects[key] + self.averageS
+			#print(self.objects[key])
+			#print()
 
 	def update(self, rects):
 		# check to see if the list of input bounding box rectangles
@@ -48,6 +74,7 @@ class CentroidTracker:
 			# as disappeared
 			for objectID in list(self.disappeared.keys()):
 				self.disappeared[objectID] += 1
+				self.relativeV[objectID] = []
 
 				# if we have reached a maximum number of consecutive
 				# frames where a given object has been marked as
@@ -88,6 +115,7 @@ class CentroidTracker:
 			# goal will be to match an input centroid to an existing
 			# object centroid
 			D = dist.cdist(np.array(objectCentroids), inputCentroids)
+			### print('distancia: ', D)
 
 			# in order to perform this matching we must (1) find the
 			# smallest value in each row and then (2) sort the row
@@ -118,6 +146,7 @@ class CentroidTracker:
 				# if the distance between centroids is greater than
 				# the maximum distance, do not associate the two
 				# centroids to the same object
+				### print('D[row, col]: ', D[row, col])
 				if D[row, col] > self.maxDistance:
 					continue
 
@@ -125,6 +154,7 @@ class CentroidTracker:
 				# set its new centroid, and reset the disappeared
 				# counter
 				objectID = objectIDs[row]
+				self.relativeV[objectID] = inputCentroids[col] - self.objects[objectID]
 				self.objects[objectID] = inputCentroids[col]
 				self.disappeared[objectID] = 0
 
@@ -149,6 +179,7 @@ class CentroidTracker:
 					# index and increment the disappeared counter
 					objectID = objectIDs[row]
 					self.disappeared[objectID] += 1
+					self.relativeV[objectID] = []
 
 					# check to see if the number of consecutive
 					# frames the object has been marked "disappeared"
@@ -163,5 +194,46 @@ class CentroidTracker:
 				for col in unusedCols:
 					self.register(inputCentroids[col])
 
+		# comput the average velocit in objects that are desapered
+		if self.flagVelocitMoment == 1:
+			self.momentLost()
+
 		# return the set of trackable objects
 		return self.objects
+
+if __name__ == '__main__':
+	rects = []
+	ct = CentroidTracker(maxDisappeared=25, maxDistance=50)
+	for i in np.arange(10):
+		j = i*10
+		rects.append((j, j, j+2, j+2))
+	
+	ct.update(rects)
+	print(ct.objects)
+	print(ct.disappeared)
+	print(ct.relativeV)
+	print()
+
+	rects= []
+	for i in np.arange(5):
+		j = i*10
+		m = i*1.5
+		rects.append((j+m, j+m, j+2+m, j+2+m))
+	
+	ct.update(rects)
+	print(ct.objects)
+	print(ct.disappeared)
+	print(ct.relativeV)
+
+	#keyVelocit = list({key for key in ct.relativeV if (len(ct.relativeV[key]) > 0)})
+	#print(keyVelocit)
+	#print()
+	#ct.momentLost()
+
+	#for k in keyVelocit:
+	#	print(ct.relativeV[k])
+	
+	#print()
+	#print("averageS: ", ct.averageS)
+	#ct.averageSpeed()
+	#print("averageS: ", ct.averageS)

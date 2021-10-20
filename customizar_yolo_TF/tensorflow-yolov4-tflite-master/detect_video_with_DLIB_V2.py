@@ -143,7 +143,19 @@ def main(_argv):
         objects = ct.update(rects)
         colors = ct.color
         totalFrames += 1
-                
+        '''
+        velocitRelative = ct.relativeV
+        totalV = 0
+        numberV = 0
+        for (objectID, centroid) in objects.items():
+            
+            if velocitRelative[objectID].any(None) == False:
+                totalV += velocitRelative[objectID]
+                numberV += 1
+        if numberV != 0:
+            totalV = totalV/numberV
+        print(totalV)
+        '''
         image = utils.draw_bbox(frame, pred_bbox)
         image = utils.draw_bbox_tracker(image, objects, rects, colors)        
         
@@ -170,7 +182,7 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ct = CentroidTracker(maxDisappeared=10, maxDistance=25)
+    ct = CentroidTracker(maxDisappeared=25, maxDistance=25)
     trackers = []
     skip_frames = 2
     confidence_filter = 0.75
