@@ -25,6 +25,7 @@ class CentroidTracker:
 		self.frameAtual = []
 		self.frameAnterior = []
 		self.percentBeirada = 0.02
+		self.dMaxNeighbor = 3 # distancia maxima relativa em Bounding Box
 		self.confiancaPrimeira = confiancaPrimeira
 
 		self.averageS = 0
@@ -85,23 +86,85 @@ class CentroidTracker:
 		del self.trackerDLIB[objectID]
 		del self.neighborLeft[objectID]
 		del self.neighborRight[objectID]
+	
+	def registraVizinho(self, idMorador, idVizinho):
+		self.neighborRight[idMorador] = {
+			'objectID' : idVizinho,
+			'object' : self.objects[idVizinho],
+			'boundingB' : self.boundingB[idVizinho],
+			'color' : self.color[idVizinho],
+			'dRelativa': abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
+		}
+		print('idMorador: ', idMorador)
+		print('objectID: ', self.neighborRight[idMorador]['objectID'])
+		print('object: ', self.neighborRight[idMorador]['object'])
+		print('boundingB: ', self.neighborRight[idMorador]['boundingB'])
+		print('color: ', self.neighborRight[idMorador]['color'])
+		print('dRelativa: ', self.neighborRight[idMorador]['dRelativa'])
+		print()
+
 
 	def closeNeighbor(self):
 		objectIDs = list(self.objects.keys())
 		objectCentroids = list(self.objects.values())
+		#calcula a distancia entre todos os centroides
 		D = dist.cdist(np.array(objectCentroids), np.array(objectCentroids))
+		#ordena os elementos das linhas do menor para o maior da esquerda para a direita
 		argsort = D.argsort()
 		
-		dMaxNeighbor = 10
-
 		for i in np.arange(len(objectIDs)):
-			
-			for j in np.arange(len(objectIDs)-1)+1:
-				if D[i, argsort[i,j]] < dMaxNeighbor:
-					print("id objeto: ", objectIDs[i])
-					print("id vizinhos: ", objectIDs[argsort[i,j]])
-					print("D vizinho: ", D[i, argsort[i,j]])
-					print()
+			flagRight = 0
+			flagLeft = 0
+			idMorador = objectIDs[i]
+			#checa se o morador nao esta desaparecido
+			if self.disappeared[idMorador] == 0:
+				#distancia maxima para aceitar um vizinho com relacao a bounding box do morador
+				dMaxNeigh = abs(self.boundingB[idMorador][2]-self.boundingB[idMorador][0])*self.dMaxNeighbor
+				#ignora a primeira posicao que seria zero pois compara a distancia do morador com ele mesmo
+				for j in np.arange(len(objectIDs)-1)+1:
+					#checa se o vizinho esta dentro do valor limite
+					if D[i, argsort[i,j]] < dMaxNeigh:
+						idVizinho = objectIDs[argsort[i,j]]
+						#print("id objeto: ", objectIDs[i])
+						#print("id vizinhos: ", objectIDs[argsort[i,j]])
+						#print("D vizinho: ", D[i, argsort[i,j]])
+						#print()
+						#checa se o vizinho nao esta desaparecido
+						if self.disappeared[idVizinho] == 0:
+							#checa se centroid do vizinho esta na mesma faixa horizontal do morador
+							startY = self.boundingB[idMorador][1]
+							endY = self.boundingB[idMorador][3]
+							cy = self.objects[idVizinho][1]
+							if cy > startY and cy < endY:
+								if ((self.objects[idVizinho][0] - self.objects[idMorador][0]) > 0)and(flagRight == 0):
+									flagRight = 1
+									#vizinho esta a direita do morador
+									
+									#se nao há nenhum vizinho ja registrado, registra esse
+									if len(self.neighborRight[idMorador]) == 0:
+										self.registraVizinho(idMorador, idVizinho)
+									#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
+									else:
+										distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
+										distanciaVizinhoAntigo = self.neighborRight[idMorador]['dRelativa']
+										if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighborRight[idMorador]['objectID'] == idVizinho):
+											self.registraVizinho(idMorador, idVizinho)
+								else:
+									if flagLeft == 0:
+										flagLeft = 1
+										#vizinho esta a esquerda do morador
+										#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
+										if len(self.neighborLeft[idMorador]) == 0:
+											self.registraVizinho(idMorador, idVizinho)
+										#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo
+										else:
+											distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
+											distanciaVizinhoAntigo = self.neighborRight[idMorador]['dRelativa']
+											if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighborRight[idMorador]['objectID'] == idVizinho):
+												self.registraVizinho(idMorador, idVizinho)
+					else:
+						break
+
 
 
 	def averageSpeed(self):
@@ -153,11 +216,11 @@ class CentroidTracker:
 		#print("beiradaFim: ", beiradaFim)
 		#print()
 		for key in keyDisappeared:
-			cy = self.objects[key][0]
+			cx = self.objects[key][0]
 			#print("key: ", key)
 			#print("cy: ", cy)
 			
-			if (cy < beiradaInicio) or (cy > beiradaFim):
+			if (cx < beiradaInicio) or (cx > beiradaFim):
 				self.deregister(key)
 
 	def firstTracking(self, idC):
@@ -375,11 +438,14 @@ class CentroidTracker:
 		# comput the average velocit in objects that are desapered
 		if (self.flagVelocitMoment)and(not(self.flagTracker)):
 			self.momentLost()
-		else: 
+		else: # utiliza track DLIB nos objetos desaparecidos
 			if self.flagTracker:
 				self.utilizeTrackingDLIB()
 		if self.flagBeirada:
 			self.deletaTrackingBeirada()
+		
+		# define os vizinhos
+		self.closeNeighbor()
 
 		# return the set of trackable objects
 		return self.objects

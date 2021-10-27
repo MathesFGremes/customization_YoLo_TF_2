@@ -69,6 +69,7 @@ DZ = dist.cdist(np.array(objectCentroids), np.array(objectCentroids))
 argsort = DZ.argsort()
 
 dMaxNeighbor = 10
+'''
 
 for i in np.arange(len(objectIDs)):
     #print("id objeto: ", objectIDs[i])
@@ -78,4 +79,16 @@ for i in np.arange(len(objectIDs)):
             print("id vizinhos: ", objectIDs[argsort[i,j]])
             print("D vizinho: ", DZ[i, argsort[i,j]])
             print()
-#print(D + (D == 0)*1000)
+#print(D + (D == 0)*1000)'''
+
+MLB_team = {
+        'Colorado' : 'Rockies',
+        'Boston'   : 'Red Sox',
+        'Minnesota': 'Twins',
+        'Milwaukee': 'Brewers',
+        'Seattle'  : 'Mariners'
+    }
+test = {}
+
+print(len(MLB_team))
+print(len(test))
