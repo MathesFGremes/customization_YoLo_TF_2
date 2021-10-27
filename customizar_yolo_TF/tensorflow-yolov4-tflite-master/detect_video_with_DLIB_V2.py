@@ -189,7 +189,7 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ct = CentroidTracker(maxDisappeared=90, maxDistance=70, confiancaPrimeira = 0.9, flagInputGreater=False, flagTracker = True)
+    ct = CentroidTracker(maxDisappeared=90, maxDistance=70, confiancaPrimeira = 0.85, flagInputGreater=False, flagTracker = True)
     trackers = []
     skip_frames = 2
     confidence_filter = 0.75

@@ -15,6 +15,8 @@ class CentroidTracker:
 		self.objects = OrderedDict()
 		self.confidence = OrderedDict()
 		self.boundingB = OrderedDict()
+		self.neighborLeft = OrderedDict()
+		self.neighborRight = OrderedDict()
 		self.color = OrderedDict()
 		self.relativeV = OrderedDict()
 		self.trackerDLIB = OrderedDict()
@@ -57,6 +59,8 @@ class CentroidTracker:
 					self.disappeared[self.nextObjectID] = 0
 					self.relativeV[self.nextObjectID] = []
 					self.trackerDLIB[self.nextObjectID] = []
+					self.neighborLeft[self.nextObjectID] = []
+					self.neighborRight[self.nextObjectID] = []
 					self.nextObjectID += 1
 			else:
 				self.objects[self.nextObjectID] = centroid
@@ -65,6 +69,8 @@ class CentroidTracker:
 				self.disappeared[self.nextObjectID] = 0
 				self.relativeV[self.nextObjectID] = []
 				self.trackerDLIB[self.nextObjectID] = []
+				self.neighborLeft[self.nextObjectID] = []
+				self.neighborRight[self.nextObjectID] = []
 				self.nextObjectID += 1
 
 	def deregister(self, objectID):
@@ -77,6 +83,26 @@ class CentroidTracker:
 		del self.color[objectID]
 		del self.relativeV[objectID]
 		del self.trackerDLIB[objectID]
+		del self.neighborLeft[objectID]
+		del self.neighborRight[objectID]
+
+	def closeNeighbor(self):
+		objectIDs = list(self.objects.keys())
+		objectCentroids = list(self.objects.values())
+		D = dist.cdist(np.array(objectCentroids), np.array(objectCentroids))
+		argsort = D.argsort()
+		
+		dMaxNeighbor = 10
+
+		for i in np.arange(len(objectIDs)):
+			
+			for j in np.arange(len(objectIDs)-1)+1:
+				if D[i, argsort[i,j]] < dMaxNeighbor:
+					print("id objeto: ", objectIDs[i])
+					print("id vizinhos: ", objectIDs[argsort[i,j]])
+					print("D vizinho: ", D[i, argsort[i,j]])
+					print()
+
 
 	def averageSpeed(self):
 		keyVelocit = list({key for key in self.relativeV if (len(self.relativeV[key]) > 0)})
@@ -360,6 +386,8 @@ class CentroidTracker:
 
 if __name__ == '__main__':
 	rects = []
+
+	
 	ct = CentroidTracker(maxDisappeared=50, maxDistance=50, flagTracker = True)
 	for i in np.arange(10):
 		j = i*10
@@ -416,3 +444,4 @@ if __name__ == '__main__':
 	#print("averageS: ", ct.averageS)
 	#ct.averageSpeed()
 	#print("averageS: ", ct.averageS)
+	
