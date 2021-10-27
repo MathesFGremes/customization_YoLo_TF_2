@@ -203,6 +203,22 @@ def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox, to
         cv2.putText(image, texto, (15, 70),
             cv2.FONT_HERSHEY_SIMPLEX, 1.1, (255, 0, 0), 2)
 
+    if len(objects.keys()) > 0:
+        texto = "Laranjas no Frame: {}".format(len(objects.keys()))
+        cv2.putText(image, texto, (15, 110),
+            cv2.FONT_HERSHEY_SIMPLEX, 1.1, (255, 0, 0), 2)
+
+    
+    keyDisappeared = list({key for key in disappeared if (disappeared[key] > 0)})
+    if len(keyDisappeared) > 0:
+        texto = "trackings: {}".format(len(keyDisappeared))
+        cv2.putText(image, texto, (15, 150),
+            cv2.FONT_HERSHEY_SIMPLEX, 1.1, (255, 0, 0), 2)
+
+    #keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] == 1)})
+    
+    #len(dict1.keys())
+
 
     return image
 
