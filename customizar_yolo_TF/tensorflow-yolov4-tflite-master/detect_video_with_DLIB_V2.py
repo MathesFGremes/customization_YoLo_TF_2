@@ -102,6 +102,7 @@ def main(_argv):
         
         ## IGUAL TCC
         rects = []
+        confRects = []
         
         # Inicializa a nova variavel de rastreador de objetos
         trackers = []
@@ -124,23 +125,26 @@ def main(_argv):
             coor[1] = int(coor[1] * image_w)
             coor[3] = int(coor[3] * image_w)
             pred_bbox[0][0][i] = coor
+            #print("scores: ", pred_bbox[1][0][i])
         ###################### DETECCAO YOLO V4 ######################## fim
         for i in range(pred_bbox[3][0]):
             # extrai a confiança da predição
             confidence = pred_bbox[1][0][i]
 
-            # filtra predições com baixa condiança
+            # filtra predições com baixa confiança  ### TIRAR ISSO AQUI E DEICAR O centroidtracker_V2.py fazer isso
             if confidence > confidence_filter:
                 #extrai as coordenadas das caixas delimitadoras
                 box = pred_bbox[0][0][i]
+                conf = pred_bbox[1][0][i]
                 #(startX, startY, endX, endY) = box
                 (startY, startX, endY, endX) = box # feito dessa forma para dar certo
 
                 rects.append((startX, startY, endX, endY))
+                confRects.append(conf)
 
         
         # atualiza os objetos do algoritmo de rastreamento de centroides
-        objects = ct.update(rects, rgb)
+        objects = ct.update(rects, confRects, rgb)
         colors = ct.color
         desap = ct.disappeared
         BoundinBoxCt = ct.boundingB
@@ -185,7 +189,7 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ct = CentroidTracker(maxDisappeared=90, maxDistance=70, flagInputGreater=False, flagTracker = True)
+    ct = CentroidTracker(maxDisappeared=90, maxDistance=70, confiancaPrimeira = 0.9, flagInputGreater=False, flagTracker = True)
     trackers = []
     skip_frames = 2
     confidence_filter = 0.75

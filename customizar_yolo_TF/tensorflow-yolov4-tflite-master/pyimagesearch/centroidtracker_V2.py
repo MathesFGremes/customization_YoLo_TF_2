@@ -6,13 +6,14 @@ import random
 import dlib
 
 class CentroidTracker:
-	def __init__(self, maxDisappeared=50, maxDistance=50, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True, flagBeirada = True):
+	def __init__(self, maxDisappeared=50, maxDistance=50, confiancaPrimeira = 0.9, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True, flagBeirada = True):
 		# initialize the next unique object ID along with two ordered
 		# dictionaries used to keep track of mapping a given object
 		# ID to its centroid and number of consecutive frames it has
 		# been marked as "disappeared", respectively
 		self.nextObjectID = 0
 		self.objects = OrderedDict()
+		self.confidence = OrderedDict()
 		self.boundingB = OrderedDict()
 		self.color = OrderedDict()
 		self.relativeV = OrderedDict()
@@ -22,6 +23,7 @@ class CentroidTracker:
 		self.frameAtual = []
 		self.frameAnterior = []
 		self.percentBeirada = 0.02
+		self.confiancaPrimeira = confiancaPrimeira
 
 		self.averageS = 0
 		self.flagTracker = flagTracker
@@ -39,15 +41,24 @@ class CentroidTracker:
 		# distance we'll start to mark the object as "disappeared"
 		self.maxDistance = maxDistance
 
-	def register(self, centroid, boundingBox):
+	def register(self, centroid, boundingBox, confianca):
 		# when registering an object we use the next available object
 		# ID to store the centroid
-		if self.flagBeirada:
-			beirada = int(self.image_wy*(self.percentBeirada))
-			beiradaInicio = beirada
-			beiradaFim = self.image_wy - beirada
-			cy = centroid[0]
-			if (cy > beiradaInicio) and (cy < beiradaFim):
+		if confianca >= self.confiancaPrimeira:
+			if self.flagBeirada:
+				beirada = int(self.image_wy*(self.percentBeirada))
+				beiradaInicio = beirada
+				beiradaFim = self.image_wy - beirada
+				cy = centroid[0]
+				if (cy > beiradaInicio) and (cy < beiradaFim):
+					self.objects[self.nextObjectID] = centroid
+					self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+					self.boundingB[self.nextObjectID] = boundingBox
+					self.disappeared[self.nextObjectID] = 0
+					self.relativeV[self.nextObjectID] = []
+					self.trackerDLIB[self.nextObjectID] = []
+					self.nextObjectID += 1
+			else:
 				self.objects[self.nextObjectID] = centroid
 				self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
 				self.boundingB[self.nextObjectID] = boundingBox
@@ -55,20 +66,13 @@ class CentroidTracker:
 				self.relativeV[self.nextObjectID] = []
 				self.trackerDLIB[self.nextObjectID] = []
 				self.nextObjectID += 1
-		else:
-			self.objects[self.nextObjectID] = centroid
-			self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-			self.boundingB[self.nextObjectID] = boundingBox
-			self.disappeared[self.nextObjectID] = 0
-			self.relativeV[self.nextObjectID] = []
-			self.trackerDLIB[self.nextObjectID] = []
-			self.nextObjectID += 1
 
 	def deregister(self, objectID):
 		# to deregister an object ID we delete the object ID from
 		# both of our respective dictionaries
 		del self.objects[objectID]
 		del self.boundingB[objectID]
+		del self.confidence[objectID]
 		del self.disappeared[objectID]
 		del self.color[objectID]
 		del self.relativeV[objectID]
@@ -171,7 +175,7 @@ class CentroidTracker:
         #        rects.append((startX, startY, endX, endY))
 
 
-	def update(self, rects, frame = []):
+	def update(self, rects, confs, frame = []):
 		if len(frame) > 0:
 			image_hx, image_wy, _ = frame.shape
 			self.image_hx = image_hx
@@ -179,6 +183,7 @@ class CentroidTracker:
 		self.frameAnterior = self.frameAtual
 		self.frameAtual = frame
 		boundingBoxs = OrderedDict()
+		confianca = OrderedDict()
 		# check to see if the list of input bounding box rectangles
 		# is empty
 		if len(rects) == 0:
@@ -188,6 +193,7 @@ class CentroidTracker:
 				self.disappeared[objectID] += 1
 				self.relativeV[objectID] = []
 				self.trackerDLIB[objectID] = []
+				self.confidence[objectID] = []
 
 				# if we have reached a maximum number of consecutive
 				# frames where a given object has been marked as
@@ -217,12 +223,13 @@ class CentroidTracker:
 			cY = int((startY + endY) / 2.0)
 			inputCentroids[i] = (cX, cY)
 			boundingBoxs[tuple(inputCentroids[i])] = (startX, startY, endX, endY)
+			confianca[tuple(inputCentroids[i])] = confs[i]
 
 		# if we are currently not tracking any objects take the input
 		# centroids and register each of them
 		if len(self.objects) == 0:
 			for i in range(0, len(inputCentroids)):
-				self.register(inputCentroids[i], boundingBoxs[tuple(inputCentroids[i])])
+				self.register(inputCentroids[i], boundingBoxs[tuple(inputCentroids[i])], confianca[tuple(inputCentroids[i])])
 
 		# otherwise, are are currently tracking objects so we need to
 		# try to match the input centroids to existing object
@@ -279,6 +286,7 @@ class CentroidTracker:
 				self.relativeV[objectID] = inputCentroids[col] - self.objects[objectID]
 				self.objects[objectID] = inputCentroids[col]
 				self.boundingB[objectID] = boundingBoxs[tuple(inputCentroids[col])]
+				self.confidence[objectID] = confianca[tuple(inputCentroids[col])]
 				self.disappeared[objectID] = 0
 				self.trackerDLIB[objectID] = []
 
@@ -305,6 +313,7 @@ class CentroidTracker:
 						objectID = objectIDs[row]
 						self.disappeared[objectID] += 1
 						self.relativeV[objectID] = []
+						self.confidence[objectID] = []
 
 						# check to see if the number of consecutive
 						# frames the object has been marked "disappeared"
@@ -317,7 +326,7 @@ class CentroidTracker:
 				# register each new input centroid as a trackable object
 				else:
 					for col in unusedCols:
-						self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])])
+						self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])], confianca[tuple(inputCentroids[col])])
 			else:
 				if D.shape[0] >= D.shape[1]:
 					# loop over the unused row indexes
@@ -327,6 +336,7 @@ class CentroidTracker:
 						objectID = objectIDs[row]
 						self.disappeared[objectID] += 1
 						self.relativeV[objectID] = []
+						self.confidence[objectID] = []
 
 						# check to see if the number of consecutive
 						# frames the object has been marked "disappeared"
@@ -334,7 +344,7 @@ class CentroidTracker:
 						if self.disappeared[objectID] > self.maxDisappeared:
 							self.deregister(objectID)
 				for col in unusedCols:
-					self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])])
+					self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])], confianca[tuple(inputCentroids[col])])
 
 		# comput the average velocit in objects that are desapered
 		if (self.flagVelocitMoment)and(not(self.flagTracker)):
