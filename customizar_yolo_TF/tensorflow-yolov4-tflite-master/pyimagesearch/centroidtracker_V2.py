@@ -107,6 +107,41 @@ class CentroidTracker:
 		print('dRelativa: ', self.neighbor[idMorador][posicao]['dRelativa'])
 		print()
 
+	def checaProximidade(self, bbMorador, centroidMorador, centroidVizinho):
+		# 5 3 6
+		# 1   2
+		# 8 4 7
+		startX = bbMorador[0]
+		startY = bbMorador[1]
+		endX = bbMorador[2]
+		endY = bbMorador[3]
+		cxM = centroidMorador[0]
+		cyM = centroidMorador[1]
+		cxV = centroidVizinho[0]
+		cyV = centroidVizinho[1]
+
+		#(self.objects[idVizinho][0] - self.objects[idMorador][0]) > 0
+		if cyV >= startY and cyV <= endY:
+			if (cxV - cxM) > 0:
+				return 2 #vizinho na direita
+			else:
+				return 1 #vizinho na esquerda
+		
+		if cxV >= startX and cxV <= endX:
+			if (cyV - cyM) > 0:
+				return 4 #vizinho em baixo
+			else:
+				return 3 #vizinho em cima
+		
+		if cxV >= startX and cyV >= endY: #canto inferior direito
+			return 7
+		if cxV >= startX and cyV <= endY: #canto superior direito
+			return 6
+		if cxV <= startX and cyV <= endY: #canto superior esquerdo
+			return 5
+		if cxV <= startX and cyV >= endY: #canto inferior esquerdo
+			return 8
+		
 
 	def closeNeighbor(self):
 		objectIDs = list(self.objects.keys())
