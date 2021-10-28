@@ -165,7 +165,8 @@ def main(_argv):
         fps = 1.0 / (time.time() - start_time)
 
         image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
-        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps)        
+        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps)
+        image = utils.draw_bbox_neighbor(image, ct)        
         
         
         ##### como ter todas as posições das BB detectadas pela YoLo ####

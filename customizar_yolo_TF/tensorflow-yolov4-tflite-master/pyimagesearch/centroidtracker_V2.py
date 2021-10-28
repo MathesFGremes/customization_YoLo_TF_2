@@ -15,8 +15,7 @@ class CentroidTracker:
 		self.objects = OrderedDict()
 		self.confidence = OrderedDict()
 		self.boundingB = OrderedDict()
-		self.neighborLeft = OrderedDict()
-		self.neighborRight = OrderedDict()
+		self.neighbor = OrderedDict()
 		self.color = OrderedDict()
 		self.relativeV = OrderedDict()
 		self.trackerDLIB = OrderedDict()
@@ -60,8 +59,10 @@ class CentroidTracker:
 					self.disappeared[self.nextObjectID] = 0
 					self.relativeV[self.nextObjectID] = []
 					self.trackerDLIB[self.nextObjectID] = []
-					self.neighborLeft[self.nextObjectID] = []
-					self.neighborRight[self.nextObjectID] = []
+					self.neighbor[self.nextObjectID] = {
+						'Right' : [],
+						'Left' : []
+					}
 					self.nextObjectID += 1
 			else:
 				self.objects[self.nextObjectID] = centroid
@@ -70,8 +71,10 @@ class CentroidTracker:
 				self.disappeared[self.nextObjectID] = 0
 				self.relativeV[self.nextObjectID] = []
 				self.trackerDLIB[self.nextObjectID] = []
-				self.neighborLeft[self.nextObjectID] = []
-				self.neighborRight[self.nextObjectID] = []
+				self.neighbor[self.nextObjectID] = {
+						'Right' : [],
+						'Left' : []
+					}
 				self.nextObjectID += 1
 
 	def deregister(self, objectID):
@@ -84,11 +87,11 @@ class CentroidTracker:
 		del self.color[objectID]
 		del self.relativeV[objectID]
 		del self.trackerDLIB[objectID]
-		del self.neighborLeft[objectID]
-		del self.neighborRight[objectID]
+		del self.neighbor[objectID]
 	
-	def registraVizinho(self, idMorador, idVizinho):
-		self.neighborRight[idMorador] = {
+	def registraVizinho(self, idMorador, idVizinho, posicao):
+		
+		self.neighbor[idMorador][posicao] = {
 			'objectID' : idVizinho,
 			'object' : self.objects[idVizinho],
 			'boundingB' : self.boundingB[idVizinho],
@@ -96,11 +99,12 @@ class CentroidTracker:
 			'dRelativa': abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
 		}
 		print('idMorador: ', idMorador)
-		print('objectID: ', self.neighborRight[idMorador]['objectID'])
-		print('object: ', self.neighborRight[idMorador]['object'])
-		print('boundingB: ', self.neighborRight[idMorador]['boundingB'])
-		print('color: ', self.neighborRight[idMorador]['color'])
-		print('dRelativa: ', self.neighborRight[idMorador]['dRelativa'])
+		print('posicao: ', posicao)
+		print('objectID: ', self.neighbor[idMorador][posicao]['objectID'])
+		print('object: ', self.neighbor[idMorador][posicao]['object'])
+		print('boundingB: ', self.neighbor[idMorador][posicao]['boundingB'])
+		print('color: ', self.neighbor[idMorador][posicao]['color'])
+		print('dRelativa: ', self.neighbor[idMorador][posicao]['dRelativa'])
 		print()
 
 
@@ -141,27 +145,27 @@ class CentroidTracker:
 									#vizinho esta a direita do morador
 									
 									#se nao há nenhum vizinho ja registrado, registra esse
-									if len(self.neighborRight[idMorador]) == 0:
-										self.registraVizinho(idMorador, idVizinho)
+									if len(self.neighbor[idMorador]['Right']) == 0:
+										self.registraVizinho(idMorador, idVizinho, 'Right')
 									#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
 									else:
 										distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
-										distanciaVizinhoAntigo = self.neighborRight[idMorador]['dRelativa']
-										if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighborRight[idMorador]['objectID'] == idVizinho):
-											self.registraVizinho(idMorador, idVizinho)
+										distanciaVizinhoAntigo = self.neighbor[idMorador]['Right']['dRelativa']
+										if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Right']['objectID'] == idVizinho):
+											self.registraVizinho(idMorador, idVizinho, 'Right')
 								else:
 									if flagLeft == 0:
 										flagLeft = 1
 										#vizinho esta a esquerda do morador
 										#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
-										if len(self.neighborLeft[idMorador]) == 0:
-											self.registraVizinho(idMorador, idVizinho)
+										if len(self.neighbor[idMorador]['Left']) == 0:
+											self.registraVizinho(idMorador, idVizinho, 'Left')
 										#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo
 										else:
 											distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
-											distanciaVizinhoAntigo = self.neighborRight[idMorador]['dRelativa']
-											if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighborRight[idMorador]['objectID'] == idVizinho):
-												self.registraVizinho(idMorador, idVizinho)
+											distanciaVizinhoAntigo = self.neighbor[idMorador]['Left']['dRelativa']
+											if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Left']['objectID'] == idVizinho):
+												self.registraVizinho(idMorador, idVizinho, 'Left')
 					else:
 						break
 

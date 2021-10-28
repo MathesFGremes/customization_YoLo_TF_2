@@ -222,6 +222,29 @@ def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox, to
 
     return image
 
+def draw_bbox_neighbor(image, centroidTracker):
+    ct = centroidTracker
+    thickness = 3
+    for (objectID, centroid) in ct.objects.items():
+        if ct.disappeared[objectID] == 0:
+            if len(ct.neighbor[objectID]['Right']) > 0:
+                start_point = tuple(centroid)
+                #print('test Right:::::: ' ,ct.neighbor[objectID]['Right']['dRelativa'])
+                end_point = (centroid[0] + ct.neighbor[objectID]['Right']['dRelativa'], centroid[1])
+                color = ct.color[objectID]
+                image = cv2.line(image, start_point, end_point, color, thickness)
+                cv2.circle(image, end_point, 7, (255,0,255), -1)
+            if len(ct.neighbor[objectID]['Left']) > 0:
+                start_point = tuple(centroid)
+                #print('test Left:::::: ' ,ct.neighbor[objectID]['Left']['dRelativa'])
+                end_point = (centroid[0] - ct.neighbor[objectID]['Left']['dRelativa'], centroid[1])
+                color = ct.color[objectID]
+                image = cv2.line(image, start_point, end_point, color, thickness)
+                cv2.circle(image, end_point, 7, (255,0,255), -1)
+    
+    return image
+
+
 def bbox_iou(bboxes1, bboxes2):
     """
     @param bboxes1: (a, b, ..., 4)
