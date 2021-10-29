@@ -285,14 +285,9 @@ class CentroidTracker:
 			self.arrayRelativeV[key]['instantes'] = self.arrayRelativeV[key]['instantes'] + 1
 			k = self.arrayRelativeV[key]['instantes']
 			self.arrayRelativeV[key]['array'][1:-1] =  self.arrayRelativeV[key]['array'][0:-2]
-			#print("self.arrayRelativeV[key]['array'][0]: ", self.arrayRelativeV[key]['array'][0])
-			#print("self.relativeV[key]", self.relativeV[key])
+			
 			self.arrayRelativeV[key]['array'][0] = self.relativeV[key]
 
-			#print("self.arrayRelativeV[key]['array'][0]: ", self.arrayRelativeV[key]['array'][0])
-			#rint("self.arrayRelativeV[key]['averageIndividual']: ", self.arrayRelativeV[key]['averageIndividual'])
-			#print("k: ", k)
-			#print("self.arrayRelativeV[key]['averageIndividual']*(k-1): ", [self.arrayRelativeV[key]['averageIndividual'][0]*(k-1), self.arrayRelativeV[key]['averageIndividual'][1]*(k-1)])
 			vx = self.arrayRelativeV[key]['averageIndividual'][0]
 			vy = self.arrayRelativeV[key]['averageIndividual'][1]
 			self.arrayRelativeV[key]['averageIndividual'] = (self.arrayRelativeV[key]['array'][0] + [vx*(k-1), vy*(k-1)])/k
@@ -312,27 +307,29 @@ class CentroidTracker:
 			#print(key)
 			#print(self.objects[key])
 			###############self.objects[key] = (self.objects[key] + self.averageS).astype(int)
+			if self.arrayRelativeV[key]['instantes'] >= 60:
+				print("ID Laranja: ", key)
+				print("averageIndividual: ", self.arrayRelativeV[key]['averageIndividual'])
+				self.objects[key] = (self.objects[key] + self.arrayRelativeV[key]['averageIndividual']).astype(int)
 
-			self.objects[key] = (self.objects[key] + self.arrayRelativeV[key]['averageIndividual']).astype(int)
-
-			### soma em X
-			#self.boundingB[key][0] = (self.boundingB[key][0] + self.averageS[0]).astype(int)
-			#self.boundingB[key][2] = (self.boundingB[key][2] + self.averageS[0]).astype(int)
-			### soma em Y
-			#self.boundingB[key][1] = (self.boundingB[key][1] + self.averageS[1]).astype(int)
-			#self.boundingB[key][3] = (self.boundingB[key][3] + self.averageS[1]).astype(int)
-			###############box = ((self.boundingB[key][0] + self.averageS[0]).astype(int),
-			###############	   (self.boundingB[key][1] + self.averageS[1]).astype(int),
-			###############	   (self.boundingB[key][2] + self.averageS[0]).astype(int),
-			###############	   (self.boundingB[key][3] + self.averageS[1]).astype(int))
-			
-			box = ((self.boundingB[key][0] + self.arrayRelativeV[key]['averageIndividual'][0]).astype(int),
-				   (self.boundingB[key][1] + self.arrayRelativeV[key]['averageIndividual'][1]).astype(int),
-				   (self.boundingB[key][2] + self.arrayRelativeV[key]['averageIndividual'][0]).astype(int),
-				   (self.boundingB[key][3] + self.arrayRelativeV[key]['averageIndividual'][1]).astype(int))
-			self.boundingB[key] = box
-			#print(self.objects[key])
-			#print()
+				### soma em X
+				#self.boundingB[key][0] = (self.boundingB[key][0] + self.averageS[0]).astype(int)
+				#self.boundingB[key][2] = (self.boundingB[key][2] + self.averageS[0]).astype(int)
+				### soma em Y
+				#self.boundingB[key][1] = (self.boundingB[key][1] + self.averageS[1]).astype(int)
+				#self.boundingB[key][3] = (self.boundingB[key][3] + self.averageS[1]).astype(int)
+				###############box = ((self.boundingB[key][0] + self.averageS[0]).astype(int),
+				###############	   (self.boundingB[key][1] + self.averageS[1]).astype(int),
+				###############	   (self.boundingB[key][2] + self.averageS[0]).astype(int),
+				###############	   (self.boundingB[key][3] + self.averageS[1]).astype(int))
+				
+				box = ((self.boundingB[key][0] + self.arrayRelativeV[key]['averageIndividual'][0]).astype(int),
+					(self.boundingB[key][1] + self.arrayRelativeV[key]['averageIndividual'][1]).astype(int),
+					(self.boundingB[key][2] + self.arrayRelativeV[key]['averageIndividual'][0]).astype(int),
+					(self.boundingB[key][3] + self.arrayRelativeV[key]['averageIndividual'][1]).astype(int))
+				self.boundingB[key] = box
+				#print(self.objects[key])
+				#print()
 	
 	def deletaTrackingBeirada(self):
 		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
