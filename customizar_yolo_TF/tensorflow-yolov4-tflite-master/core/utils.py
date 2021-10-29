@@ -241,6 +241,20 @@ def draw_bbox_neighbor(image, centroidTracker):
                 color = ct.color[objectID]
                 image = cv2.line(image, start_point, end_point, color, thickness)
                 cv2.circle(image, end_point, 7, (255,0,255), -1)
+            if len(ct.neighbor[objectID]['Down']) > 0:
+                start_point = tuple(centroid)
+                #print('test Left:::::: ' ,ct.neighbor[objectID]['Left']['dRelativa'])
+                end_point = (centroid[0], centroid[1] + ct.neighbor[objectID]['Down']['dRelativa'])
+                color = ct.color[objectID]
+                image = cv2.line(image, start_point, end_point, color, thickness)
+                cv2.circle(image, end_point, 7, (255,0,255), -1)
+            if len(ct.neighbor[objectID]['Top']) > 0:
+                start_point = tuple(centroid)
+                #print('test Left:::::: ' ,ct.neighbor[objectID]['Left']['dRelativa'])
+                end_point = (centroid[0], centroid[1] - ct.neighbor[objectID]['Top']['dRelativa'])
+                color = ct.color[objectID]
+                image = cv2.line(image, start_point, end_point, color, thickness)
+                cv2.circle(image, end_point, 7, (255,0,255), -1)
     
     return image
 

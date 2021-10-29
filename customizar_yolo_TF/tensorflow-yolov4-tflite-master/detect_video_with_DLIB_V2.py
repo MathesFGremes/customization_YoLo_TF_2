@@ -166,7 +166,7 @@ def main(_argv):
 
         image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
         image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps)
-        image = utils.draw_bbox_neighbor(image, ct)        
+        #image = utils.draw_bbox_neighbor(image, ct)        
         
         
         ##### como ter todas as posições das BB detectadas pela YoLo ####
@@ -190,7 +190,7 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ct = CentroidTracker(maxDisappeared=90, maxDistance=70, confiancaPrimeira = 0.85, flagInputGreater=False, flagTracker = True)
+    ct = CentroidTracker(maxDisappeared=90, maxDistance=70, confiancaPrimeira = 0.85, flagInputGreater=False, flagVelocitMoment = True, flagTracker = False)
     trackers = []
     skip_frames = 2
     confidence_filter = 0.75
