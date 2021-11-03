@@ -1,4 +1,5 @@
-from pyimagesearch.centroidtracker_V2 import CentroidTracker
+from pyimagesearch.centroidtracker_V3 import CentroidTracker
+#from pyimagesearch.centroidtracker_V2 import CentroidTracker
 #import pyimagesearch.centroidtracker as centroidT
 import time
 import tensorflow as tf
@@ -67,6 +68,7 @@ def main(_argv):
 
     count_mat = 0
     totalFrames = 0
+    flagUnica = 1
     while True:
         return_value, frame = vid.read()
         if return_value:
@@ -106,6 +108,7 @@ def main(_argv):
         
         # Inicializa a nova variavel de rastreador de objetos
         trackers = []
+        
         ###################### DETECCAO YOLO V4 ######################## inicio
         boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
             boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
@@ -117,14 +120,6 @@ def main(_argv):
             score_threshold=FLAGS.score
         )
         pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
-        #print(pred_bbox[0][:])
-        #print(len(pred_bbox[0]))
-        #print(pred_bbox[1][:])
-        #print(len(pred_bbox[1]))
-        #print(pred_bbox[2][:])
-        #print(len(pred_bbox[2]))
-        #print(pred_bbox[3])
-        #print()
         image_h, image_w, _ = frame.shape
         for i in range(pred_bbox[3][0]):
             coor = pred_bbox[0][0][i]
@@ -132,12 +127,19 @@ def main(_argv):
             coor[2] = int(coor[2] * image_h)
             coor[1] = int(coor[1] * image_w)
             coor[3] = int(coor[3] * image_w)
+
+            coor[0] = 0
+            coor[2] = 0
+            coor[1] = 0
+            coor[3] = 0
             pred_bbox[0][0][i] = coor
             #print("scores: ", pred_bbox[1][0][i])
         ###################### DETECCAO YOLO V4 ######################## fim
+        
         for i in range(pred_bbox[3][0]):
             # extrai a confiança da predição
             confidence = pred_bbox[1][0][i]
+            confidence = 0 #######################################################
 
             # filtra predições com baixa confiança  ### TIRAR ISSO AQUI E DEICAR O centroidtracker_V2.py fazer isso
             if confidence > confidence_filter:
@@ -149,7 +151,33 @@ def main(_argv):
 
                 rects.append((startX, startY, endX, endY))
                 confRects.append(conf)
+        
+        if flagUnica == 1 or True:
+            flagUnica = 0
+            rects = []
+            confRects = []
+            image_h, image_w, _ = frame.shape
+            #with open("./customizar_yolo_TF/tensorflow-yolov4-tflite-master/anotar_frames_video/Corrigido_CVAT/18-04-2021 001.txt") as f:
+            with open("./anotar_frames_video/Corrigido_CVAT/18-04-2021 001.txt") as f:
+                for line in f:
+                    
+                    classe = int(line[0])
+                    cY = float(line[2:10])
+                    cX = float(line[11:19])
+                    lY = float(line[20:28])
+                    lX = float(line[29:37])
 
+                    startY = int((cY-lY/2) * image_w)
+                    startX = int((cX-lX/2) * image_h)
+                    endY = int((cY+lY/2)*image_w)
+                    endX = int((cX+lX/2)*image_h)
+
+                    
+                    #print(startY)
+                    #lista.append((classe, startY, startX, endY, endX))
+                    rects.append((startY, startX, endY, endX))
+                    confRects.append(0.95)
+        
         
         # atualiza os objetos do algoritmo de rastreamento de centroides
         objects = ct.update(rects, confRects, rgb)
@@ -157,6 +185,7 @@ def main(_argv):
         desap = ct.disappeared
         BoundinBoxCt = ct.boundingB
         totalFrames += 1
+        print(totalFrames)
         '''
         velocitRelative = ct.relativeV
         totalV = 0
@@ -182,8 +211,8 @@ def main(_argv):
             
         count_mat = count_mat + 1
         if count_mat > 0:
-            print("FPS: %.2f" % fps)
-            print("Numero Laranjas: %i" % int(ct.nextObjectID-1))
+            #print("FPS: %.2f" % fps)
+            #print("Numero Laranjas: %i" % int(ct.nextObjectID-1))
             count_mat = 0
         result = np.asarray(image)
         #cv2.namedWindow("result", cv2.WINDOW_AUTOSIZE)
@@ -198,7 +227,7 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ct = CentroidTracker(maxDisappeared=90, maxDistance=70, confiancaPrimeira = 0.85,
+    ct = CentroidTracker(maxDisappeared=120, maxDistance=70, confiancaPrimeira = 0.85,
                          flagInputGreater=False, flagVelocitMoment = False, flagTracker = True)
     trackers = []
     skip_frames = 2
