@@ -107,58 +107,78 @@ def main(_argv):
         confRects = []
         
         # Inicializa a nova variavel de rastreador de objetos
-        trackers = []
+        
         
         ###################### DETECCAO YOLO V4 ######################## inicio
-        boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
-            boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
-            scores=tf.reshape(
-                pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
-            max_output_size_per_class=500,
-            max_total_size=500,
-            iou_threshold=FLAGS.iou,
-            score_threshold=FLAGS.score
-        )
-        pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
-        image_h, image_w, _ = frame.shape
-        for i in range(pred_bbox[3][0]):
-            coor = pred_bbox[0][0][i]
-            coor[0] = int(coor[0] * image_h)
-            coor[2] = int(coor[2] * image_h)
-            coor[1] = int(coor[1] * image_w)
-            coor[3] = int(coor[3] * image_w)
+        if flagUnica == 1:
+            boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
+                boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
+                scores=tf.reshape(
+                    pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
+                max_output_size_per_class=500,
+                max_total_size=500,
+                iou_threshold=FLAGS.iou,
+                score_threshold=FLAGS.score
+            )
+            pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
+            
+            image_h, image_w, _ = frame.shape
+            for i in range(pred_bbox[3][0]):
+                coor = pred_bbox[0][0][i]
+                coor[0] = int(coor[0] * image_h)
+                coor[2] = int(coor[2] * image_h)
+                coor[1] = int(coor[1] * image_w)
+                coor[3] = int(coor[3] * image_w)
 
+                #coor[0] = 0
+                #coor[2] = 0
+                #coor[1] = 0
+                #coor[3] = 0
+                pred_bbox[0][0][i] = coor
+                #print("scores: ", pred_bbox[1][0][i])
+            ###################### DETECCAO YOLO V4 ######################## fim
+            
+            for i in range(pred_bbox[3][0]):
+                # extrai a confiança da predição
+                confidence = pred_bbox[1][0][i]
+                confidence = 0 #######################################################
+
+                # filtra predições com baixa confiança  ### TIRAR ISSO AQUI E DEICAR O centroidtracker_V2.py fazer isso
+                if confidence > confidence_filter:
+                    #extrai as coordenadas das caixas delimitadoras
+                    box = pred_bbox[0][0][i]
+                    conf = pred_bbox[1][0][i]
+                    #(startX, startY, endX, endY) = box
+                    (startY, startX, endY, endX) = box # feito dessa forma para dar certo
+
+                    rects.append((startX, startY, endX, endY))
+                    confRects.append(conf)
+            pred_bbox_FALSA = pred_bbox
+        else:
+            rects = []
+            confRects = []
+            pred_bbox = pred_bbox_FALSA
+            coor = pred_bbox[0][0][i]
             coor[0] = 0
             coor[2] = 0
             coor[1] = 0
             coor[3] = 0
             pred_bbox[0][0][i] = coor
-            #print("scores: ", pred_bbox[1][0][i])
-        ###################### DETECCAO YOLO V4 ######################## fim
-        
-        for i in range(pred_bbox[3][0]):
-            # extrai a confiança da predição
-            confidence = pred_bbox[1][0][i]
-            confidence = 0 #######################################################
 
-            # filtra predições com baixa confiança  ### TIRAR ISSO AQUI E DEICAR O centroidtracker_V2.py fazer isso
-            if confidence > confidence_filter:
-                #extrai as coordenadas das caixas delimitadoras
-                box = pred_bbox[0][0][i]
-                conf = pred_bbox[1][0][i]
-                #(startX, startY, endX, endY) = box
-                (startY, startX, endY, endX) = box # feito dessa forma para dar certo
+            pred_bbox[1][0][i] = 0.99
+            pred_bbox[3][0][0] = 1
+            rects.append((0, 0, 0, 0))
 
-                rects.append((startX, startY, endX, endY))
-                confRects.append(conf)
-        
-        if flagUnica == 1 or True:
+            pass #Colocar aqui detecção falsa do Yolo sem nenhum objeto
+
+        if flagUnica == 1:
             flagUnica = 0
             rects = []
             confRects = []
             image_h, image_w, _ = frame.shape
             #with open("./customizar_yolo_TF/tensorflow-yolov4-tflite-master/anotar_frames_video/Corrigido_CVAT/18-04-2021 001.txt") as f:
             with open("./anotar_frames_video/Corrigido_CVAT/18-04-2021 001.txt") as f:
+                i = 0
                 for line in f:
                     
                     classe = int(line[0])
@@ -172,11 +192,24 @@ def main(_argv):
                     endY = int((cY+lY/2)*image_w)
                     endX = int((cX+lX/2)*image_h)
 
+                    coor = pred_bbox[0][0][i]
+                    coor[0] = startY
+                    coor[2] = startX
+                    coor[1] = endY
+                    coor[3] = endX
+                    pred_bbox[0][0][i] = coor
+
+                    pred_bbox[1][0][i] = 0.99
+
+
+                    i += 1
+
                     
                     #print(startY)
                     #lista.append((classe, startY, startX, endY, endX))
                     rects.append((startY, startX, endY, endX))
-                    confRects.append(0.95)
+                    confRects.append(0.99)
+                pred_bbox[3][0] = i
         
         
         # atualiza os objetos do algoritmo de rastreamento de centroides
@@ -186,19 +219,7 @@ def main(_argv):
         BoundinBoxCt = ct.boundingB
         totalFrames += 1
         print(totalFrames)
-        '''
-        velocitRelative = ct.relativeV
-        totalV = 0
-        numberV = 0
-        for (objectID, centroid) in objects.items():
-            
-            if velocitRelative[objectID].any(None) == False:
-                totalV += velocitRelative[objectID]
-                numberV += 1
-        if numberV != 0:
-            totalV = totalV/numberV
-        print(totalV)
-        '''
+        
         fps = 1.0 / (time.time() - start_time)
 
         image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
@@ -229,7 +250,7 @@ def main(_argv):
 if __name__ == '__main__':
     ct = CentroidTracker(maxDisappeared=120, maxDistance=70, confiancaPrimeira = 0.85,
                          flagInputGreater=False, flagVelocitMoment = False, flagTracker = True)
-    trackers = []
+    
     skip_frames = 2
     confidence_filter = 0.75
     try:
