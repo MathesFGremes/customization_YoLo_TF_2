@@ -174,27 +174,27 @@ def main(_argv):
                 for line in f:
                     
                     classe = int(line[0])
-                    cY = float(line[2:10])
-                    cX = float(line[11:19])
-                    lY = float(line[20:28])
-                    lX = float(line[29:37])
+                    cX = float(line[2:10])
+                    cY = float(line[11:19])
+                    lX = float(line[20:28])
+                    lY = float(line[29:37])
 
-                    startY = int((cY-lY/2) * image_w)
-                    startX = int((cX-lX/2) * image_h)
-                    endY = int((cY+lY/2)*image_w)
-                    endX = int((cX+lX/2)*image_h)
+                    startX = int((cX-lX/2) * image_w)
+                    startY = int((cY-lY/2) * image_h)
+                    endX = int((cX+lX/2)*image_w)
+                    endY = int((cY+lY/2)*image_h)
 
                     coor = pred_bbox[0][0][i]
-                    coor[0] = startX
-                    coor[1] = startY
-                    coor[2] = endX
-                    coor[3] = endY
+                    coor[0] = startY
+                    coor[1] = startX
+                    coor[2] = endY
+                    coor[3] = endX
                     #print(coor)
                     pred_bbox[0][0][i] = coor
                     pred_bbox[1][0][i] = 1
 
                     i += 1
-                    rects.append((startY, startX, endY, endX))
+                    rects.append((startX, startY, endX, endY))
                     confRects.append(1)
                 pred_bbox[3][0] = i
 
@@ -231,10 +231,10 @@ def main(_argv):
                 (startX, startY, endX, endY) = boundinBoxs
                 (cx, cy) = centroides[objectID]
 
-                cXX = float(cx/image_h)
-                cYY = float(cy/image_w)
-                lX = float(2*(cXX - startX/image_h))
-                lY = float(2*(cYY - startY/image_w))
+                cXX = float(cx/image_w)
+                cYY = float(cy/image_h)
+                lX = float(2*(cXX - startX/image_w))
+                lY = float(2*(cYY - startY/image_h))
                 #lX = float(2*(endX/image_h - cXX))
                 #lY = float(2*(endY/image_w - cYY))
                 classe = 0
@@ -251,7 +251,7 @@ def main(_argv):
                 #print("lX: ", lX)
                 #print("lY: ", lY)
 
-                yoloNote = classe + ' ' + cYY + ' ' + cXX + ' ' + lY + ' ' + lX
+                yoloNote = classe + ' ' + cXX + ' ' + cYY + ' ' + lX + ' ' + lY
                 f.write(yoloNote)
                 f.write('\n')
                 #classe = int(line[0])
