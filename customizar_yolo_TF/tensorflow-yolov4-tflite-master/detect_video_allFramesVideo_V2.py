@@ -218,6 +218,54 @@ def main(_argv):
         image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps)
         #image = utils.draw_bbox_neighbor(image, ct)        
         
+        image_h, image_w, _ = frame.shape
+        centroides = ct.objects
+        
+        
+        frameString = str(totalFrames).zfill(3)
+        
+        blocoDeNotaYolo = "./anotar_frames_video/Algoritmo/18-04-2021 " + frameString + ".txt"
+        with open(blocoDeNotaYolo, 'w') as f:
+            for (objectID, boundinBoxs) in BoundinBoxCt.items():
+                #(startY, startX, endY, endX) = boundinBoxs
+                (startX, startY, endX, endY) = boundinBoxs
+                (cx, cy) = centroides[objectID]
+
+                cXX = float(cx/image_h)
+                cYY = float(cy/image_w)
+                lX = float(2*(cXX - startX/image_h))
+                lY = float(2*(cYY - startY/image_w))
+                #lX = float(2*(endX/image_h - cXX))
+                #lY = float(2*(endY/image_w - cYY))
+                classe = 0
+                
+                cXX = str(format(cXX, '.6f'))
+                cYY = str(format(cYY, '.6f'))
+                lX = str(format(lX, '.6f'))
+                lY = str(format(lY, '.6f'))
+                classe = str(classe)
+
+                #print()
+                #print("cXX: ", cXX)
+                #print("cYY: ", cYY)
+                #print("lX: ", lX)
+                #print("lY: ", lY)
+
+                yoloNote = classe + ' ' + cYY + ' ' + cXX + ' ' + lY + ' ' + lX
+                f.write(yoloNote)
+                f.write('\n')
+                #classe = int(line[0])
+                #cY = float(line[2:10])
+                #cX = float(line[11:19])
+                #lY = float(line[20:28])
+                #lX = float(line[29:37])
+
+                #startY = int((cY-lY/2) * image_w)
+                #startX = int((cX-lX/2) * image_h)
+                #endY = int((cY+lY/2)*image_w)
+                #endX = int((cX+lX/2)*image_h)
+
+            
         
         ##### como ter todas as posições das BB detectadas pela YoLo ####
 
