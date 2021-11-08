@@ -228,7 +228,7 @@ def main(_argv):
 
         #image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
         image = utils.draw_bbox(frame, pred_bbox, show_BB=True)
-        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps)
+        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps, frame = totalFrames)
         #image = utils.draw_frame(image, totalFrames)
         #image = utils.draw_bbox_neighbor(image, ct)        
         
@@ -236,6 +236,7 @@ def main(_argv):
         centroides = ct.objects
         
         
+        #frameString = str(totalFrames + 1).zfill(3)
         frameString = str(totalFrames + 1).zfill(3)
         print("frameString: ", frameString)
         

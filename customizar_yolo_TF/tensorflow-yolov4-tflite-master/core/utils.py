@@ -172,7 +172,7 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), allowed
                             fontScale, (0, 0, 0), bbox_thick // 2, lineType=cv2.LINE_AA)
     return image
 
-def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox, totalObjetos = [], fps = []):
+def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox, totalObjetos = [], fps = [], frame = []):
     image_h, image_w, _ = image.shape
     corBox = (255, 255, 255)
     for (objectID, centroid) in objects.items():
@@ -213,6 +213,11 @@ def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox, to
     if len(keyDisappeared) > 0:
         texto = "trackings: {}".format(len(keyDisappeared))
         cv2.putText(image, texto, (15, 150),
+            cv2.FONT_HERSHEY_SIMPLEX, 1.1, (255, 0, 0), 2)
+    
+    if frame != []:
+        texto = "Frame: {}".format(frame)
+        cv2.putText(image, texto, (15, 190),
             cv2.FONT_HERSHEY_SIMPLEX, 1.1, (255, 0, 0), 2)
 
     #keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] == 1)})
