@@ -72,8 +72,8 @@ def main(_argv):
     while True:
         #if totalFrames > 0:
         #    frameAnterior = frameCru
-        #if totalFrames == 0: # Pula o primeiro frame
-        #    return_value, frame = vid.read()    
+        if totalFrames == 0: # Pula o primeiro frame
+            return_value, frame = vid.read()    
         return_value, frame = vid.read()
 
         #frameCru = frame
@@ -97,6 +97,7 @@ def main(_argv):
         image_data = image_data[np.newaxis, ...].astype(np.float32)
         start_time = time.time()
 
+        '''
         if FLAGS.framework == 'tflite':
             interpreter.set_tensor(input_details[0]['index'], image_data)
             interpreter.invoke()
@@ -221,18 +222,20 @@ def main(_argv):
         colors = ct.color
         desap = ct.disappeared
         BoundinBoxCt = ct.boundingB
+        '''
         totalFrames += 1
         print("Frame atual:", totalFrames)
 
         fps = 1.0 / (time.time() - start_time)
 
         #image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
-        image = utils.draw_bbox(frame, pred_bbox, show_BB=True)
-        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps)
-        #image = utils.draw_frame(image, totalFrames)
+        #image = utils.draw_bbox(frame, pred_bbox, show_BB=True)
+        #image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps)
+        image = utils.draw_frame(image, totalFrames)
         #image = utils.draw_bbox_neighbor(image, ct)        
         
         image_h, image_w, _ = frame.shape
+        '''
         centroides = ct.objects
         
         
@@ -296,7 +299,7 @@ def main(_argv):
         
         #if not FLAGS.dont_show:
             #cv2.imshow("result", result)
-        
+        '''
         if FLAGS.output:
             out.write(result)
         if cv2.waitKey(1) & 0xFF == ord('q'): break

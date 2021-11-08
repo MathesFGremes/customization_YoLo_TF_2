@@ -222,6 +222,12 @@ def draw_bbox_tracker(image, objects, rects, colors, disappeared, BoundinBox, to
 
     return image
 
+def draw_frame(image, frameAtual):
+    texto = "Frame: {}".format(frameAtual)
+    cv2.putText(image, texto, (1000, 30),
+        cv2.FONT_HERSHEY_SIMPLEX, 1.1, (255, 0, 0), 2)
+    return image
+
 def draw_bbox_neighbor(image, centroidTracker):
     ct = centroidTracker
     thickness = 3
