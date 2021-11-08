@@ -237,10 +237,12 @@ def main(_argv):
         
         
         #frameString = str(totalFrames + 1).zfill(3)
-        frameString = str(totalFrames + 1).zfill(3)
+        frameString = str(totalFrames -1).zfill(3)
         print("frameString: ", frameString)
         
-        blocoDeNotaYolo = "./anotar_frames_video/Algoritmo/18-04-2021 " + frameString + ".txt"
+        #blocoDeNotaYolo = "./anotar_frames_video/Algoritmo/18-04-2021 " + frameString + ".txt"
+        #18-04-202 - frame000
+        blocoDeNotaYolo = "./anotar_frames_video/Algoritmo/18-04-2021 - frame" + frameString + ".txt"
         with open(blocoDeNotaYolo, 'w') as f:
             for (objectID, boundinBoxs) in BoundinBoxCt.items():
                 #(startY, startX, endY, endX) = boundinBoxs
