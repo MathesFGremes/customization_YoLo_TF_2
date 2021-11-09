@@ -1,6 +1,7 @@
 from pyimagesearch.centroidtracker_V2 import CentroidTracker
 #import pyimagesearch.centroidtracker as centroidT
 import time
+import copy
 import tensorflow as tf
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 if len(physical_devices) > 0:
@@ -169,51 +170,55 @@ def main(_argv):
         #    print(i)
 
         #utiliza as BB feitas por mim no CVAT no primeiro frame
-        if flagBlocoNotas == 1:
-            flagBlocoNotas = 0
-            rects = []
-            confRects = []
-            image_h, image_w, _ = frame.shape
-            #for i in range(pred_bbox[3][0]):
-            #    coor = pred_bbox[0][0][i]
-            #    coor[0] = 0
-            #    coor[2] = 0
-            #    coor[1] = 0
-            #    coor[3] = 0
-            #    pred_bbox[0][0][i] = coor
-            #print("bloco de notas .......................... comeco")
-            with open("./anotar_frames_video/Corrigido_CVAT/18-04-2021 001.txt") as f:
-                i = 0
-                for line in f:
-                    
-                    classe = int(line[0])
-                    cX = float(line[2:10])
-                    cY = float(line[11:19])
-                    lX = float(line[20:28])
-                    lY = float(line[29:37])
-
-                    startX = int((cX-lX/2) * image_w)
-                    startY = int((cY-lY/2) * image_h)
-                    endX = int((cX+lX/2)*image_w)
-                    endY = int((cY+lY/2)*image_h)
-
-                    coor = pred_bbox[0][0][i]
-                    coor[0] = startY
-                    coor[1] = startX
-                    coor[2] = endY
-                    coor[3] = endX
-                    #print(coor)
-                    pred_bbox[0][0][i] = coor
-                    pred_bbox[1][0][i] = 1
-
-                    i += 1
-                    rects.append((startX, startY, endX, endY))
-                    confRects.append(1)
-                pred_bbox[3][0] = i
-
+        if totalFrames >= 120:
+            if flagBlocoNotas == 1:
+                ct.deregisterAll()
+                flagBlocoNotas = 0
+                rects = []
+                confRects = []
+                image_h, image_w, _ = frame.shape
                 #for i in range(pred_bbox[3][0]):
-                #    print(rects[i])
-            #print("bloco de notas .......................... fim")
+                #    coor = pred_bbox[0][0][i]
+                #    coor[0] = 0
+                #    coor[2] = 0
+                #    coor[1] = 0
+                #    coor[3] = 0
+                #    pred_bbox[0][0][i] = coor
+                #print("bloco de notas .......................... comeco")
+                #pathBlocoDeNotas = "./anotar_frames_video/Corrigido_CVAT/18-04-2021 001.txt"
+                pathBlocoDeNotas = "./anotar_frames_video/Corrigido_CVAT/18-04-2021 - frame120.txt"
+                with open(pathBlocoDeNotas) as f:
+                    i = 0
+                    for line in f:
+                        
+                        classe = int(line[0])
+                        cX = float(line[2:10])
+                        cY = float(line[11:19])
+                        lX = float(line[20:28])
+                        lY = float(line[29:37])
+
+                        startX = int((cX-lX/2) * image_w)
+                        startY = int((cY-lY/2) * image_h)
+                        endX = int((cX+lX/2)*image_w)
+                        endY = int((cY+lY/2)*image_h)
+
+                        coor = pred_bbox[0][0][i]
+                        coor[0] = startY
+                        coor[1] = startX
+                        coor[2] = endY
+                        coor[3] = endX
+                        #print(coor)
+                        pred_bbox[0][0][i] = coor
+                        pred_bbox[1][0][i] = 1
+
+                        i += 1
+                        rects.append((startX, startY, endX, endY))
+                        confRects.append(1)
+                    pred_bbox[3][0] = i
+
+                    #for i in range(pred_bbox[3][0]):
+                    #    print(rects[i])
+                #print("bloco de notas .......................... fim")
             
 
         # atualiza os objetos do algoritmo de rastreamento de centroides
@@ -306,9 +311,11 @@ def main(_argv):
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ct = CentroidTracker(maxDisappeared=120, maxDistance=70, confiancaPrimeira = 0.85,
+    
+    ct = CentroidTracker(maxDisappeared=30, maxDistance=70, confiancaPrimeira = 0.85,
                          flagInputGreater=False, flagVelocitMoment = False,
-                         flagTracker = True, flagBeirada = False)
+                         flagTracker = True, flagBeirada = True)
+    #ct2 = copy.deepcopy(ct)
     trackers = []
     skip_frames = 2
     confidence_filter = 0.75

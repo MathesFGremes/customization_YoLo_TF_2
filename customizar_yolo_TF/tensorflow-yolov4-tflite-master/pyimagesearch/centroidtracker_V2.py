@@ -59,6 +59,7 @@ class CentroidTracker:
 					self.boundingB[self.nextObjectID] = boundingBox
 					self.disappeared[self.nextObjectID] = 0
 					self.relativeV[self.nextObjectID] = []
+					self.confidence[self.nextObjectID] = confianca
 					
 					instantes = 0
 					arrayV = [0 for x in range(60)]
@@ -84,6 +85,7 @@ class CentroidTracker:
 				self.boundingB[self.nextObjectID] = boundingBox
 				self.disappeared[self.nextObjectID] = 0
 				self.relativeV[self.nextObjectID] = []
+				self.confidence[self.nextObjectID] = confianca
 
 				instantes = 0
 				arrayV = [0 for x in range(60)]
@@ -103,6 +105,13 @@ class CentroidTracker:
 						'Down' : []
 					}
 				self.nextObjectID += 1
+
+	def deregisterAll(self):
+		#for objectID in list(self.objects.keys()):
+		keys = list({key for key in self.objects})
+		for objectID in keys:
+			#print('ok')
+			self.deregister(objectID)
 
 	def deregister(self, objectID):
 		# to deregister an object ID we delete the object ID from
