@@ -110,7 +110,7 @@ class CentroidTracker:
 		#for objectID in list(self.objects.keys()):
 		keys = list({key for key in self.objects})
 		for objectID in keys:
-			#print('ok')
+			print('ok')
 			self.deregister(objectID)
 
 	def deregister(self, objectID):

@@ -170,56 +170,56 @@ def main(_argv):
         #    print(i)
 
         #utiliza as BB feitas por mim no CVAT no primeiro frame
-        if totalFrames >= 540:
-            if flagBlocoNotas == 1:
-                print("deregisterAll")
-                ct.deregisterAll()
-                flagBlocoNotas = 0
-                rects = []
-                confRects = []
-                image_h, image_w, _ = frame.shape
+        if totalFrames >= 0:
+            #print("deregisterAll")
+            #ct.deregisterAll()
+            #flagBlocoNotas = 0
+            rects = []
+            confRects = []
+            image_h, image_w, _ = frame.shape
+            #for i in range(pred_bbox[3][0]):
+            #    coor = pred_bbox[0][0][i]
+            #    coor[0] = 0
+            #    coor[2] = 0
+            #    coor[1] = 0
+            #    coor[3] = 0
+            #    pred_bbox[0][0][i] = coor
+            #print("bloco de notas .......................... comeco")
+            #pathBlocoDeNotas = "./anotar_frames_video/Corrigido_CVAT/18-04-2021 001.txt"
+            blocoNotasN = str(totalFrames).zfill(3)
+            pathBlocoDeNotas = "./anotar_frames_video/Bloco_Notas_Corrigidos/18-04-2021 - frame"+ blocoNotasN +".txt"
+            with open(pathBlocoDeNotas) as f:
+                i = 0
+                for line in f:
+                    
+                    classe = int(line[0])
+                    cX = float(line[2:10])
+                    cY = float(line[11:19])
+                    lX = float(line[20:28])
+                    lY = float(line[29:37])
+
+                    startX = int((cX-lX/2) * image_w)
+                    startY = int((cY-lY/2) * image_h)
+                    endX = int((cX+lX/2)*image_w)
+                    endY = int((cY+lY/2)*image_h)
+
+                    coor = pred_bbox[0][0][i]
+                    coor[0] = startY
+                    coor[1] = startX
+                    coor[2] = endY
+                    coor[3] = endX
+                    #print(coor)
+                    pred_bbox[0][0][i] = coor
+                    pred_bbox[1][0][i] = 1
+
+                    i += 1
+                    rects.append((startX, startY, endX, endY))
+                    confRects.append(1)
+                pred_bbox[3][0] = i
+
                 #for i in range(pred_bbox[3][0]):
-                #    coor = pred_bbox[0][0][i]
-                #    coor[0] = 0
-                #    coor[2] = 0
-                #    coor[1] = 0
-                #    coor[3] = 0
-                #    pred_bbox[0][0][i] = coor
-                #print("bloco de notas .......................... comeco")
-                #pathBlocoDeNotas = "./anotar_frames_video/Corrigido_CVAT/18-04-2021 001.txt"
-                pathBlocoDeNotas = "./anotar_frames_video/Corrigido_CVAT/18-04-2021 - frame540.txt"
-                with open(pathBlocoDeNotas) as f:
-                    i = 0
-                    for line in f:
-                        
-                        classe = int(line[0])
-                        cX = float(line[2:10])
-                        cY = float(line[11:19])
-                        lX = float(line[20:28])
-                        lY = float(line[29:37])
-
-                        startX = int((cX-lX/2) * image_w)
-                        startY = int((cY-lY/2) * image_h)
-                        endX = int((cX+lX/2)*image_w)
-                        endY = int((cY+lY/2)*image_h)
-
-                        coor = pred_bbox[0][0][i]
-                        coor[0] = startY
-                        coor[1] = startX
-                        coor[2] = endY
-                        coor[3] = endX
-                        #print(coor)
-                        pred_bbox[0][0][i] = coor
-                        pred_bbox[1][0][i] = 1
-
-                        i += 1
-                        rects.append((startX, startY, endX, endY))
-                        confRects.append(1)
-                    pred_bbox[3][0] = i
-
-                    #for i in range(pred_bbox[3][0]):
-                    #    print(rects[i])
-                #print("bloco de notas .......................... fim")
+                #    print(rects[i])
+            #print("bloco de notas .......................... fim")
             
 
         # atualiza os objetos do algoritmo de rastreamento de centroides
