@@ -122,55 +122,58 @@ def main(_argv):
         # Inicializa a nova variavel de rastreador de objetos
         trackers = []
         
-        ###################### DETECCAO YOLO V4 ######################## inicio
-        boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
-            boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
-            scores=tf.reshape(
-                pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
-            max_output_size_per_class=500,
-            max_total_size=500,
-            iou_threshold=FLAGS.iou,
-            score_threshold=FLAGS.score
-        )
-        pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
-        #print(pred_bbox[0][:])
-        #print(len(pred_bbox[0]))
-        #print(pred_bbox[1][:])
-        #print(len(pred_bbox[1]))
-        #print(pred_bbox[2][:])
-        #print(len(pred_bbox[2]))
-        #print(pred_bbox[3])
-        #print()
-        image_h, image_w, _ = frame.shape
-        for i in range(pred_bbox[3][0]):
-            coor = pred_bbox[0][0][i]
-            coor[0] = int(coor[0] * image_h)
-            coor[2] = int(coor[2] * image_h)
-            coor[1] = int(coor[1] * image_w)
-            coor[3] = int(coor[3] * image_w)
-            pred_bbox[0][0][i] = coor
-            #print(coor)
-            #print("scores: ", pred_bbox[1][0][i])
-        
-        ###################### DETECCAO YOLO V4 ######################## fim
-        #for i in range(pred_bbox[3][0]):
-        #    # extrai a confiança da predição
-        #    confidence = pred_bbox[1][0][i]
-        #
-        #    # filtra predições com baixa confiança  ### TIRAR ISSO AQUI E DEICAR O centroidtracker_V2.py fazer isso
-        #    if confidence > confidence_filter:
-        #        #extrai as coordenadas das caixas delimitadoras
-        #        box = pred_bbox[0][0][i]
-        #        conf = pred_bbox[1][0][i]
-        #        #(startX, startY, endX, endY) = box
-        #        (startY, startX, endY, endX) = box # feito dessa forma para dar certo
-        #
-        #        rects.append((startX, startY, endX, endY))
-        #        confRects.append(conf)
+        if totalFrames == 0:
+            ###################### DETECCAO YOLO V4 ######################## inicio
+            boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
+                boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
+                scores=tf.reshape(
+                    pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
+                max_output_size_per_class=500,
+                max_total_size=500,
+                iou_threshold=FLAGS.iou,
+                score_threshold=FLAGS.score
+            )
+            pred_bbox = [boxes.numpy(), scores.numpy(), classes.numpy(), valid_detections.numpy()]
+            #print(pred_bbox[0][:])
+            #print(len(pred_bbox[0]))
+            #print(pred_bbox[1][:])
+            #print(len(pred_bbox[1]))
+            #print(pred_bbox[2][:])
+            #print(len(pred_bbox[2]))
+            #print(pred_bbox[3])
+            #print()
+            image_h, image_w, _ = frame.shape
+            for i in range(pred_bbox[3][0]):
+                coor = pred_bbox[0][0][i]
+                coor[0] = int(coor[0] * image_h)
+                coor[2] = int(coor[2] * image_h)
+                coor[1] = int(coor[1] * image_w)
+                coor[3] = int(coor[3] * image_w)
+                pred_bbox[0][0][i] = coor
+                #print(coor)
+                #print("scores: ", pred_bbox[1][0][i])
+            
+            pred_bbox_copy = pred_bbox[:]
+            ###################### DETECCAO YOLO V4 ######################## fim
+            #for i in range(pred_bbox[3][0]):
+            #    # extrai a confiança da predição
+            #    confidence = pred_bbox[1][0][i]
+            #
+            #    # filtra predições com baixa confiança  ### TIRAR ISSO AQUI E DEICAR O centroidtracker_V2.py fazer isso
+            #    if confidence > confidence_filter:
+            #        #extrai as coordenadas das caixas delimitadoras
+            #        box = pred_bbox[0][0][i]
+            #        conf = pred_bbox[1][0][i]
+            #        #(startX, startY, endX, endY) = box
+            #        (startY, startX, endY, endX) = box # feito dessa forma para dar certo
+            #
+            #        rects.append((startX, startY, endX, endY))
+            #        confRects.append(conf)
 
-        #for i in rects:
-        #    print(i)
+            #for i in rects:
+            #    print(i)
 
+        pred_bbox = pred_bbox_copy[:]
         #utiliza as BB feitas por mim no CVAT no primeiro frame
         if totalFrames >= 0:
             #print("deregisterAll")

@@ -65,8 +65,16 @@ argsort = DZ.argsort()
 
 objectIDs = list(objects.keys())
 objectCentroids = list(objects.values())
-DZ = dist.cdist(np.array(objectCentroids), np.array(objectCentroids))
+#DZ = dist.cdist(np.array(objectCentroids), np.array(objectCentroids))
+DZ = dist.cdist([objectCentroids[0]], np.array(objectCentroids))
+
 argsort = DZ.argsort()
+print(argsort)
+id = objectIDs[argsort[0][1]]
+print(id)
+print(objects[id])
+print(len(argsort[0]))
+
 
 dMaxNeighbor = 10
 '''
@@ -90,5 +98,5 @@ MLB_team = {
     }
 test = {}
 
-print(len(MLB_team))
-print(len(test))
+#print(len(MLB_team))
+#print(len(test))

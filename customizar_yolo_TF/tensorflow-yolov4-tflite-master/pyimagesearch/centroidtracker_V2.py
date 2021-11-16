@@ -25,6 +25,7 @@ class CentroidTracker:
 		self.frameAtual = []
 		self.frameAnterior = []
 		self.percentBeirada = 0.02
+		self.iouNewRegister = 0.15
 		self.dMaxNeighbor = 3 # distancia maxima relativa em Bounding Box
 		self.confiancaPrimeira = confiancaPrimeira
 
@@ -279,8 +280,6 @@ class CentroidTracker:
 					else:
 						break
 
-
-
 	def averageSpeed(self):
 		keyVelocit = list({key for key in self.relativeV if (len(self.relativeV[key]) > 0)})
 		
@@ -400,6 +399,72 @@ class CentroidTracker:
 		#
         #        #adiciona a caixa delimitadora para a lista
         #        rects.append((startX, startY, endX, endY))
+
+	def bb_intersection_over_union(self, bbCandidato, bbRegistrado):
+		# determine the (x, y)-coordinates of the intersection rectangle
+		xA = max(bbCandidato[0], bbRegistrado[0])
+		yA = max(bbCandidato[1], bbRegistrado[1])
+		xB = min(bbCandidato[2], bbRegistrado[2])
+		yB = min(bbCandidato[3], bbRegistrado[3])
+
+		
+		# compute the area of intersection rectangle
+		interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+		# compute the area of both the prediction and ground-truth
+		# rectangles
+		boxAArea = (bbCandidato[2] - bbCandidato[0] + 1) * (bbCandidato[3] - bbCandidato[1] + 1)
+		boxBArea = (bbRegistrado[2] - bbRegistrado[0] + 1) * (bbRegistrado[3] - bbRegistrado[1] + 1)
+		# compute the intersection over union by taking the intersection
+		# area and dividing it by the sum of prediction + ground-truth
+		# areas - the interesection area
+		iou = interArea / float(boxAArea + boxBArea - interArea)
+		# return the intersection over union value
+		return iou
+
+	def registerIOU(self, col, inputCentroids, boundingBoxs, confianca):
+		#inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])], confianca[tuple(inputCentroids[col])]
+		objectIDs = list(self.objects.keys())
+		objectCentroids = list(self.objects.values())
+
+		D = dist.cdist([inputCentroids[col]], np.array(objectCentroids))
+		#ordena os elementos das linhas do menor para o maior da esquerda para a direita
+		argsort = D.argsort()
+		print(".................")
+		print('argsort: ', argsort)
+		tam = len(argsort[0])
+
+		j = 4
+		if tam < j:
+			j = tam
+		
+		iou = -1
+		for i in np.arange(j):
+			id = objectIDs[argsort[0][i]]
+			
+			if iou == -1:
+				iou = self.bb_intersection_over_union(boundingBoxs[tuple(inputCentroids[col])], self.boundingB[id])
+				print("iou: ", iou)
+			else:
+				iou2 = self.bb_intersection_over_union(boundingBoxs[tuple(inputCentroids[col])], self.boundingB[id])
+				print("iou2: ", iou2)
+				if iou2 > iou:
+					iou = iou2
+			
+			if iou > 0:
+				bbA = boundingBoxs[tuple(inputCentroids[col])]
+				bbB = self.boundingB[id]
+				if(bbB[0]>=bbA[0])and(bbB[1]>=bbA[1])and(bbB[2]<=bbA[2])and(bbB[3]<=bbA[3]):
+					iou = 1
+					print("BB contida A")
+				else:
+					if(bbB[0]<=bbA[0])and(bbB[1]<=bbA[1])and(bbB[2]>=bbA[2])and(bbB[3]>=bbA[3]):
+						iou = 1
+						print("BB contida B")
+
+		print(".................")
+		if iou < self.iouNewRegister:
+			self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])], confianca[tuple(inputCentroids[col])])
+
 
 
 	def update(self, rects, confs, frame = []):
@@ -560,7 +625,8 @@ class CentroidTracker:
 				# register each new input centroid as a trackable object
 				else:
 					for col in unusedCols:
-						self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])], confianca[tuple(inputCentroids[col])])
+						#self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])], confianca[tuple(inputCentroids[col])])
+						self.registerIOU(col, inputCentroids, boundingBoxs, confianca)
 			else:
 				if D.shape[0] >= D.shape[1]:
 					# loop over the unused row indexes
@@ -578,7 +644,8 @@ class CentroidTracker:
 						if self.disappeared[objectID] > self.maxDisappeared:
 							self.deregister(objectID)
 				for col in unusedCols:
-					self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])], confianca[tuple(inputCentroids[col])])
+					#self.register(inputCentroids[col], boundingBoxs[tuple(inputCentroids[col])], confianca[tuple(inputCentroids[col])])
+					self.registerIOU(col, inputCentroids, boundingBoxs, confianca)
 
 		# comput the average velocit in objects that are desapered
 		if (self.flagVelocitMoment)and(not(self.flagTracker)):
@@ -599,7 +666,7 @@ if __name__ == '__main__':
 	rects = []
 
 	
-	ct = CentroidTracker(maxDisappeared=50, maxDistance=50, flagTracker = True)
+	ct = CentroidTracker(maxDisappeared=1, maxDistance=50, flagTracker = True)
 	for i in np.arange(10):
 		j = i*10
 		rects.append((j, j, j+2, j+2))
