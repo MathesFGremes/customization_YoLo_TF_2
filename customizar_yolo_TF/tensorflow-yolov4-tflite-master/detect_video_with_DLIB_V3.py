@@ -157,11 +157,14 @@ def main(_argv):
         desap = ct.disappeared
         BoundinBoxCt = ct.boundingB
         totalFrames += 1
-        
+        print("Frame atual:", totalFrames)
+
         fps = 1.0 / (time.time() - start_time)
 
-        image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
-        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps)
+        #image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
+        image = utils.draw_bbox(frame, pred_bbox, show_BB=True)
+        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps, frame = totalFrames)
+        #image = utils.draw_frame(image, totalFrames)
         #image = utils.draw_bbox_neighbor(image, ct)        
         
         
