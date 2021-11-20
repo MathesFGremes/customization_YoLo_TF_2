@@ -5,8 +5,18 @@ import numpy as np
 import random
 import dlib
 
+trackerType = {
+    "csrt": cv2.TrackerCSRT_create(),
+	"kcf": cv2.TrackerKCF_create(),
+    "boosting": cv2.TrackerBoosting_create(),
+	"mil": cv2.TrackerMIL_create(),
+    "tld": cv2.TrackerTLD_create,
+	"medianflow": cv2.TrackerMedianFlow_create(),
+	"mosse": cv2.TrackerMOSSE_create()
+}
+
 class CentroidTracker:
-	def __init__(self, maxDisappeared=50, maxDistance=50, confiancaPrimeira = 0.9, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True, flagBeirada = True):
+	def __init__(self, maxDisappeared=50, maxDistance=50, confiancaPrimeira = 0.9, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True, flagBeirada = True, trackingType = 'Dlib'):
 		# initialize the next unique object ID along with two ordered
 		# dictionaries used to keep track of mapping a given object
 		# ID to its centroid and number of consecutive frames it has
@@ -28,6 +38,7 @@ class CentroidTracker:
 		self.iouNewRegister = 0.15
 		self.dMaxNeighbor = 3 # distancia maxima relativa em Bounding Box
 		self.confiancaPrimeira = confiancaPrimeira
+		self.trackingType = trackingType
 
 		self.averageS = 0
 		self.flagTracker = flagTracker
