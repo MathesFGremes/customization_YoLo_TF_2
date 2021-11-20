@@ -8,13 +8,13 @@ import cv2
 
 
 trackerType = {
-    "csrt": cv2.TrackerCSRT_create(),
-	"kcf": cv2.TrackerKCF_create(),
-    "boosting": cv2.TrackerBoosting_create(),
-	"mil": cv2.TrackerMIL_create(),
-    "tld": cv2.TrackerTLD_create(),
-	"medianflow": cv2.TrackerMedianFlow_create(),
-	"mosse": cv2.TrackerMOSSE_create()
+    "csrt": cv2.TrackerCSRT_create,
+	"kcf": cv2.TrackerKCF_create,
+    "boosting": cv2.TrackerBoosting_create,
+	"mil": cv2.TrackerMIL_create,
+    "tld": cv2.TrackerTLD_create,
+	"medianflow": cv2.TrackerMedianFlow_create,
+	"mosse": cv2.TrackerMOSSE_create
 }
 
 class CentroidTracker:
@@ -36,6 +36,8 @@ class CentroidTracker:
 		
 		self.frameAtual = []
 		self.frameAnterior = []
+		self.frameAtualOriginal = []
+		self.frameAnteriorOriginal = []
 		self.percentBeirada = 0.02
 		self.iouNewRegister = 0.15
 		self.dMaxNeighbor = 3 # distancia maxima relativa em Bounding Box
@@ -385,10 +387,9 @@ class CentroidTracker:
 						self.boundingB[idC][1],
 						self.boundingB[idC][2] - self.boundingB[idC][0],
 						self.boundingB[idC][3] - self.boundingB[idC][1])
-			self.trackerDLIB[idC].init(self.frameAnterior, initBB)
+			self.trackerDLIB[idC].init(self.frameAnteriorOriginal, initBB)
 
 	def utilizeTrackingDLIB(self):
-		
 		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] == 1)})
 		for key in keyDisappeared:
 			self.firstTracking(key)
@@ -411,9 +412,15 @@ class CentroidTracker:
 				self.boundingB[key] = (startX, startY, endX, endY)
 			else:
 
-				(success, box) = self.trackerDLIB[key].update(self.frameAtual)
+				(success, box) = self.trackerDLIB[key].update(self.frameAtualOriginal)
 				# check to see if the tracking was a success
 				if success:
+					#print("********************************")
+					print("********************************")
+					print("CERTO")
+					print(box)
+					print("********************************")
+					#print("********************************")
 					(x, y, w, h) = [int(v) for v in box]
 					#cv2.rectangle(frame, (x, y), (x + w, y + h),
 					#	(0, 255, 0), 2)
@@ -514,13 +521,16 @@ class CentroidTracker:
 
 
 
-	def update(self, rects, confs, frame = []):
+	def update(self, rects, confs, frame = [], frameOriginal = []):
 		if len(frame) > 0:
 			image_hx, image_wy, _ = frame.shape
 			self.image_hx = image_hx
 			self.image_wy = image_wy
 		self.frameAnterior = self.frameAtual
 		self.frameAtual = frame
+
+		self.frameAnteriorOriginal = self.frameAtualOriginal
+		self.frameAtualOriginal = frameOriginal
 		boundingBoxs = OrderedDict()
 		confianca = OrderedDict()
 		# check to see if the list of input bounding box rectangles
@@ -544,8 +554,7 @@ class CentroidTracker:
 				self.momentLost()
 			else: 
 				if self.flagTracker:
-					if self.trackingType == 'Dlib':
-						self.utilizeTrackingDLIB()
+					self.utilizeTrackingDLIB()
 			if self.flagBeirada:
 				self.deletaTrackingBeirada()
 
@@ -700,8 +709,7 @@ class CentroidTracker:
 			self.momentLost()
 		else: # utiliza track DLIB nos objetos desaparecidos
 			if self.flagTracker:
-				if self.trackingType == 'Dlib':
-					self.utilizeTrackingDLIB()
+				self.utilizeTrackingDLIB()
 		if self.flagBeirada:
 			self.deletaTrackingBeirada()
 		

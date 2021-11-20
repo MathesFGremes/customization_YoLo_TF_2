@@ -76,6 +76,7 @@ def main(_argv):
         #if totalFrames == 0: # Pula o primeiro frame
         #    return_value, frame = vid.read()    
         return_value, frame = vid.read()
+        frameOriginal = frame
 
         #frameCru = frame
 
@@ -228,7 +229,7 @@ def main(_argv):
             
 
         # atualiza os objetos do algoritmo de rastreamento de centroides
-        objects = ct.update(rects, confRects, rgb)
+        objects = ct.update(rects, confRects, rgb, frameOriginal)
         colors = ct.color
         desap = ct.disappeared
         BoundinBoxCt = ct.boundingB
