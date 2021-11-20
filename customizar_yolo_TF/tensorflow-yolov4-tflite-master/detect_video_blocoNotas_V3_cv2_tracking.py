@@ -1,4 +1,4 @@
-from pyimagesearch.centroidtracker_V4 import CentroidTracker
+from pyimagesearch.centroidtracker_V5 import CentroidTracker
 #import pyimagesearch.centroidtracker as centroidT
 import time
 import copy
@@ -320,7 +320,7 @@ if __name__ == '__main__':
     
     ct = CentroidTracker(maxDisappeared=30, maxDistance=70, confiancaPrimeira = 0.85,
                          flagInputGreater=False, flagVelocitMoment = False,
-                         flagTracker = True, flagBeirada = True)
+                         flagTracker = True, flagBeirada = True, trackingType = 'csrt')
     #ct2 = copy.deepcopy(ct)
     trackers = []
     skip_frames = 2

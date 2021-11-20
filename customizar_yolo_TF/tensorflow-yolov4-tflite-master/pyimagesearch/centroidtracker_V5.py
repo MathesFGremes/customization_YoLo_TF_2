@@ -4,13 +4,15 @@ from collections import OrderedDict
 import numpy as np
 import random
 import dlib
+import cv2
+
 
 trackerType = {
     "csrt": cv2.TrackerCSRT_create(),
 	"kcf": cv2.TrackerKCF_create(),
     "boosting": cv2.TrackerBoosting_create(),
 	"mil": cv2.TrackerMIL_create(),
-    "tld": cv2.TrackerTLD_create,
+    "tld": cv2.TrackerTLD_create(),
 	"medianflow": cv2.TrackerMedianFlow_create(),
 	"mosse": cv2.TrackerMOSSE_create()
 }
@@ -372,31 +374,65 @@ class CentroidTracker:
 				self.deregister(key)
 
 	def firstTracking(self, idC):
-		self.trackerDLIB[idC] = dlib.correlation_tracker()
-		rect = dlib.rectangle(self.boundingB[idC][0], self.boundingB[idC][1],
-							  self.boundingB[idC][2], self.boundingB[idC][3])
-		self.trackerDLIB[idC].start_track(self.frameAnterior, rect)
+		if self.trackingType == 'Dlib':
+			self.trackerDLIB[idC] = dlib.correlation_tracker()
+			rect = dlib.rectangle(self.boundingB[idC][0], self.boundingB[idC][1],
+								self.boundingB[idC][2], self.boundingB[idC][3])
+			self.trackerDLIB[idC].start_track(self.frameAnterior, rect)
+		else:
+			self.trackerDLIB[idC] = trackerType[self.trackingType]()
+			initBB = (self.boundingB[idC][0], 
+						self.boundingB[idC][1],
+						self.boundingB[idC][2] - self.boundingB[idC][0],
+						self.boundingB[idC][3] - self.boundingB[idC][1])
+			self.trackerDLIB[idC].init(self.frameAnterior, initBB)
 
 	def utilizeTrackingDLIB(self):
+		
 		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] == 1)})
 		for key in keyDisappeared:
 			self.firstTracking(key)
 
 		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
 		for key in keyDisappeared:
-			sc = self.trackerDLIB[key].update(self.frameAtual)
-			pos = self.trackerDLIB[key].get_position()
+			if self.trackingType == 'Dlib':
+				sc = self.trackerDLIB[key].update(self.frameAtual)
+				pos = self.trackerDLIB[key].get_position()
 
-			startX = int(pos.left())
-			startY = int(pos.top())
-			endX = int(pos.right())
-			endY = int(pos.bottom())
+				startX = int(pos.left())
+				startY = int(pos.top())
+				endX = int(pos.right())
+				endY = int(pos.bottom())
 
-			cX = int((startX + endX) / 2.0)
-			cY = int((startY + endY) / 2.0)
+				cX = int((startX + endX) / 2.0)
+				cY = int((startY + endY) / 2.0)
 
-			self.objects[key] = (cX, cY)
-			self.boundingB[key] = (startX, startY, endX, endY)
+				self.objects[key] = (cX, cY)
+				self.boundingB[key] = (startX, startY, endX, endY)
+			else:
+
+				(success, box) = self.trackerDLIB[key].update(self.frameAtual)
+				# check to see if the tracking was a success
+				if success:
+					(x, y, w, h) = [int(v) for v in box]
+					#cv2.rectangle(frame, (x, y), (x + w, y + h),
+					#	(0, 255, 0), 2)
+					startX = int(x)
+					startY = int(y)
+					endX = int(x + w)
+					endY = int(y + h)
+					
+					cX = int((startX + endX) / 2.0)
+					cY = int((startY + endY) / 2.0)
+
+					self.objects[key] = (cX, cY)
+					self.boundingB[key] = (startX, startY, endX, endY)
+				else:
+					print("********************************")
+					print("********************************")
+					print("Tracking Falhou")
+					print("********************************")
+					print("********************************")
 		#for tracker in trackers:
         #        #atualiza as caixas delimitadoras do rastreador de objetos
         #        sc = tracker.update(rgb)
@@ -508,7 +544,8 @@ class CentroidTracker:
 				self.momentLost()
 			else: 
 				if self.flagTracker:
-					self.utilizeTrackingDLIB()
+					if self.trackingType == 'Dlib':
+						self.utilizeTrackingDLIB()
 			if self.flagBeirada:
 				self.deletaTrackingBeirada()
 
@@ -663,7 +700,8 @@ class CentroidTracker:
 			self.momentLost()
 		else: # utiliza track DLIB nos objetos desaparecidos
 			if self.flagTracker:
-				self.utilizeTrackingDLIB()
+				if self.trackingType == 'Dlib':
+					self.utilizeTrackingDLIB()
 		if self.flagBeirada:
 			self.deletaTrackingBeirada()
 		
