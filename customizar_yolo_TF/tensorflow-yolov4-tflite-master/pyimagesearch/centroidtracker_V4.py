@@ -27,362 +27,362 @@ trackerType = {
 }
 
 class CentroidTracker:
-	def __init__(self, maxDisappeared=50, maxDistance=50, confiancaPrimeira = 0.9, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True, flagBeirada = True, trackingType = 'Dlib'):
-		# initialize the next unique object ID along with two ordered
-		# dictionaries used to keep track of mapping a given object
-		# ID to its centroid and number of consecutive frames it has
-		# been marked as "disappeared", respectively
-		self.nextObjectID = 0
-		self.objects = OrderedDict()
-		self.confidence = OrderedDict()
-		self.boundingB = OrderedDict()
-		self.neighbor = OrderedDict()
-		self.color = OrderedDict()
-		self.relativeV = OrderedDict()
-		self.arrayRelativeV = OrderedDict()
-		self.trackerDLIB = OrderedDict()
-		self.disappeared = OrderedDict()
-		
-		self.frameAtual = []
-		self.frameAnterior = []
-		self.percentBeirada = 0.02
-		self.iouNewRegister = 0.15
-		self.dMaxNeighbor = 3 # distancia maxima relativa em Bounding Box
-		self.confiancaPrimeira = confiancaPrimeira
+    def __init__(self, maxDisappeared=50, maxDistance=50, confiancaPrimeira = 0.9, flagVelocitMoment = True, flagTracker = False, flagInputGreater = True, flagBeirada = True, trackingType = 'Dlib'):
+        # initialize the next unique object ID along with two ordered
+        # dictionaries used to keep track of mapping a given object
+        # ID to its centroid and number of consecutive frames it has
+        # been marked as "disappeared", respectively
+        self.nextObjectID = 0
+        self.objects = OrderedDict()
+        self.confidence = OrderedDict()
+        self.boundingB = OrderedDict()
+        self.neighbor = OrderedDict()
+        self.color = OrderedDict()
+        self.relativeV = OrderedDict()
+        self.arrayRelativeV = OrderedDict()
+        self.trackerDLIB = OrderedDict()
+        self.disappeared = OrderedDict()
+        
+        self.frameAtual = []
+        self.frameAnterior = []
+        self.percentBeirada = 0.02
+        self.iouNewRegister = 0.15
+        self.dMaxNeighbor = 3 # distancia maxima relativa em Bounding Box
+        self.confiancaPrimeira = confiancaPrimeira
         self.trackingType = trackingType
 
-		self.averageS = 0
-		self.flagTracker = flagTracker
-		self.flagVelocitMoment = flagVelocitMoment
-		self.flagInputGreater = flagInputGreater
-		self.flagBeirada = flagBeirada
+        self.averageS = 0
+        self.flagTracker = flagTracker
+        self.flagVelocitMoment = flagVelocitMoment
+        self.flagInputGreater = flagInputGreater
+        self.flagBeirada = flagBeirada
 
-		# store the number of maximum consecutive frames a given
-		# object is allowed to be marked as "disappeared" until we
-		# need to deregister the object from tracking
-		self.maxDisappeared = maxDisappeared
+        # store the number of maximum consecutive frames a given
+        # object is allowed to be marked as "disappeared" until we
+        # need to deregister the object from tracking
+        self.maxDisappeared = maxDisappeared
 
-		# store the maximum distance between centroids to associate
-		# an object -- if the distance is larger than this maximum
-		# distance we'll start to mark the object as "disappeared"
-		self.maxDistance = maxDistance
+        # store the maximum distance between centroids to associate
+        # an object -- if the distance is larger than this maximum
+        # distance we'll start to mark the object as "disappeared"
+        self.maxDistance = maxDistance
 
-	def register(self, centroid, boundingBox, confianca):
-		# when registering an object we use the next available object
-		# ID to store the centroid
-		if confianca >= self.confiancaPrimeira:
-			if self.flagBeirada:
-				beirada = int(self.image_wy*(self.percentBeirada))
-				beiradaInicio = beirada
-				beiradaFim = self.image_wy - beirada
-				cy = centroid[0]
-				if (cy > beiradaInicio) and (cy < beiradaFim):
-					self.objects[self.nextObjectID] = centroid
-					self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-					self.boundingB[self.nextObjectID] = boundingBox
-					self.disappeared[self.nextObjectID] = 0
-					self.relativeV[self.nextObjectID] = []
-					self.confidence[self.nextObjectID] = confianca
-					
-					instantes = 0
-					arrayV = [0 for x in range(60)]
-					#arrayV = np.empty(60)
-					#arrayV[:] = np.NaN
-					averageIndividual = [0, 0]
-					self.arrayRelativeV[self.nextObjectID] = {
-						'instantes' : instantes,
-						'array' : arrayV,
-						'averageIndividual' : averageIndividual
-					}
-					self.trackerDLIB[self.nextObjectID] = []
-					self.neighbor[self.nextObjectID] = {
-						'Right' : [],
-						'Left' : [],
-						'Top' : [],
-						'Down' : []
-					}
-					self.nextObjectID += 1
-			else:
-				self.objects[self.nextObjectID] = centroid
-				self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-				self.boundingB[self.nextObjectID] = boundingBox
-				self.disappeared[self.nextObjectID] = 0
-				self.relativeV[self.nextObjectID] = []
-				self.confidence[self.nextObjectID] = confianca
+    def register(self, centroid, boundingBox, confianca):
+        # when registering an object we use the next available object
+        # ID to store the centroid
+        if confianca >= self.confiancaPrimeira:
+            if self.flagBeirada:
+                beirada = int(self.image_wy*(self.percentBeirada))
+                beiradaInicio = beirada
+                beiradaFim = self.image_wy - beirada
+                cy = centroid[0]
+                if (cy > beiradaInicio) and (cy < beiradaFim):
+                    self.objects[self.nextObjectID] = centroid
+                    self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+                    self.boundingB[self.nextObjectID] = boundingBox
+                    self.disappeared[self.nextObjectID] = 0
+                    self.relativeV[self.nextObjectID] = []
+                    self.confidence[self.nextObjectID] = confianca
+                    
+                    instantes = 0
+                    arrayV = [0 for x in range(60)]
+                    #arrayV = np.empty(60)
+                    #arrayV[:] = np.NaN
+                    averageIndividual = [0, 0]
+                    self.arrayRelativeV[self.nextObjectID] = {
+                        'instantes' : instantes,
+                        'array' : arrayV,
+                        'averageIndividual' : averageIndividual
+                    }
+                    self.trackerDLIB[self.nextObjectID] = []
+                    self.neighbor[self.nextObjectID] = {
+                        'Right' : [],
+                        'Left' : [],
+                        'Top' : [],
+                        'Down' : []
+                    }
+                    self.nextObjectID += 1
+            else:
+                self.objects[self.nextObjectID] = centroid
+                self.color[self.nextObjectID] = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+                self.boundingB[self.nextObjectID] = boundingBox
+                self.disappeared[self.nextObjectID] = 0
+                self.relativeV[self.nextObjectID] = []
+                self.confidence[self.nextObjectID] = confianca
 
-				instantes = 0
-				arrayV = [0 for x in range(60)]
-				#arrayV = np.empty(60)
-				#arrayV[:] = np.NaN
-				averageIndividual = [0, 0]
-				self.arrayRelativeV[self.nextObjectID] = {
-					'instantes' : instantes,
-					'array' : arrayV,
-					'averageIndividual' : averageIndividual
-				}
-				self.trackerDLIB[self.nextObjectID] = []
-				self.neighbor[self.nextObjectID] = {
-						'Right' : [],
-						'Left' : [],
-						'Top' : [],
-						'Down' : []
-					}
-				self.nextObjectID += 1
+                instantes = 0
+                arrayV = [0 for x in range(60)]
+                #arrayV = np.empty(60)
+                #arrayV[:] = np.NaN
+                averageIndividual = [0, 0]
+                self.arrayRelativeV[self.nextObjectID] = {
+                    'instantes' : instantes,
+                    'array' : arrayV,
+                    'averageIndividual' : averageIndividual
+                }
+                self.trackerDLIB[self.nextObjectID] = []
+                self.neighbor[self.nextObjectID] = {
+                        'Right' : [],
+                        'Left' : [],
+                        'Top' : [],
+                        'Down' : []
+                    }
+                self.nextObjectID += 1
 
-	def deregisterAll(self):
-		#for objectID in list(self.objects.keys()):
-		keys = list({key for key in self.objects})
-		for objectID in keys:
-			print('ok')
-			self.deregister(objectID)
+    def deregisterAll(self):
+        #for objectID in list(self.objects.keys()):
+        keys = list({key for key in self.objects})
+        for objectID in keys:
+            print('ok')
+            self.deregister(objectID)
 
-	def deregister(self, objectID):
-		# to deregister an object ID we delete the object ID from
-		# both of our respective dictionaries
-		del self.objects[objectID]
-		del self.boundingB[objectID]
-		del self.confidence[objectID]
-		del self.disappeared[objectID]
-		del self.color[objectID]
-		del self.relativeV[objectID]
-		del self.arrayRelativeV[objectID]
-		del self.trackerDLIB[objectID]
-		del self.neighbor[objectID]
-	
-	def registraVizinho(self, idMorador, idVizinho, posicao):
-		
-		self.neighbor[idMorador][posicao] = {
-			'objectID' : idVizinho,
-			'object' : self.objects[idVizinho],
-			'boundingB' : self.boundingB[idVizinho],
-			'color' : self.color[idVizinho],
-			'dRelativa': []
-		}
-		if posicao == 'Right' or posicao == 'Left':
-			self.neighbor[idMorador][posicao]['dRelativa'] = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
-		else:
-			if posicao == 'Top' or posicao == 'Down':
-				self.neighbor[idMorador][posicao]['dRelativa'] = abs(self.objects[idVizinho][1] - self.objects[idMorador][1])
+    def deregister(self, objectID):
+        # to deregister an object ID we delete the object ID from
+        # both of our respective dictionaries
+        del self.objects[objectID]
+        del self.boundingB[objectID]
+        del self.confidence[objectID]
+        del self.disappeared[objectID]
+        del self.color[objectID]
+        del self.relativeV[objectID]
+        del self.arrayRelativeV[objectID]
+        del self.trackerDLIB[objectID]
+        del self.neighbor[objectID]
 
-		#print('idMorador: ', idMorador)
-		#print('posicao: ', posicao)
-		#print('objectID: ', self.neighbor[idMorador][posicao]['objectID'])
-		#print('object: ', self.neighbor[idMorador][posicao]['object'])
-		#print('boundingB: ', self.neighbor[idMorador][posicao]['boundingB'])
-		#print('color: ', self.neighbor[idMorador][posicao]['color'])
-		#print('dRelativa: ', self.neighbor[idMorador][posicao]['dRelativa'])
-		#print()
-	
-	def decideRegistraVizinho(self, idMorador, idVizinho, flagRight, flagLeft, flagTop, flagDown):
-		vizinhanca = self.checaProximidade(self.boundingB[idMorador], self.objects[idMorador], self.objects[idVizinho])
-		if vizinhanca == 1 or vizinhanca == 2:
-			if vizinhanca == 2 and flagRight == 0:
-				flagRight = 1
-				#vizinho esta a direita do morador
-				
-				#se nao há nenhum vizinho ja registrado, registra esse
-				if len(self.neighbor[idMorador]['Right']) == 0:
-					self.registraVizinho(idMorador, idVizinho, 'Right')
-				#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
-				else:
-					distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
-					distanciaVizinhoAntigo = self.neighbor[idMorador]['Right']['dRelativa']
-					if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Right']['objectID'] == idVizinho):
-						self.registraVizinho(idMorador, idVizinho, 'Right')
-			else:
-				if flagLeft == 0:
-					flagLeft = 1
-					#vizinho esta a esquerda do morador
-					#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
-					if len(self.neighbor[idMorador]['Left']) == 0:
-						self.registraVizinho(idMorador, idVizinho, 'Left')
-					#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo
-					else:
-						distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
-						distanciaVizinhoAntigo = self.neighbor[idMorador]['Left']['dRelativa']
-						if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Left']['objectID'] == idVizinho):
-							self.registraVizinho(idMorador, idVizinho, 'Left')
-		
-		if vizinhanca == 3 or vizinhanca == 4:
-			if vizinhanca == 4 and flagDown == 0:
-				flagDown = 1
-				#vizinho esta a baixo do morador
-				
-				#se nao há nenhum vizinho ja registrado, registra esse
-				if len(self.neighbor[idMorador]['Down']) == 0:
-					self.registraVizinho(idMorador, idVizinho, 'Down')
-				#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
-				else:
-					distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
-					distanciaVizinhoAntigo = self.neighbor[idMorador]['Down']['dRelativa']
-					if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Down']['objectID'] == idVizinho):
-						self.registraVizinho(idMorador, idVizinho, 'Down')
-			else:
-				if flagTop == 0:
-					flagTop = 1
-					#vizinho esta a cima do morador
-					#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
-					if len(self.neighbor[idMorador]['Top']) == 0:
-						self.registraVizinho(idMorador, idVizinho, 'Top')
-					#se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo
-					else:
-						distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
-						distanciaVizinhoAntigo = self.neighbor[idMorador]['Top']['dRelativa']
-						if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Top']['objectID'] == idVizinho):
-							self.registraVizinho(idMorador, idVizinho, 'Top')
-		
-		return flagRight, flagLeft, flagTop, flagDown
+    def registraVizinho(self, idMorador, idVizinho, posicao):
+        
+        self.neighbor[idMorador][posicao] = {
+            'objectID' : idVizinho,
+            'object' : self.objects[idVizinho],
+            'boundingB' : self.boundingB[idVizinho],
+            'color' : self.color[idVizinho],
+            'dRelativa': []
+        }
+        if posicao == 'Right' or posicao == 'Left':
+            self.neighbor[idMorador][posicao]['dRelativa'] = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
+        else:
+            if posicao == 'Top' or posicao == 'Down':
+                self.neighbor[idMorador][posicao]['dRelativa'] = abs(self.objects[idVizinho][1] - self.objects[idMorador][1])
 
-	def checaProximidade(self, bbMorador, centroidMorador, centroidVizinho):
-		# 5 3 6
-		# 1   2
-		# 8 4 7
-		startX = bbMorador[0]
-		startY = bbMorador[1]
-		endX = bbMorador[2]
-		endY = bbMorador[3]
-		cxM = centroidMorador[0]
-		cyM = centroidMorador[1]
-		cxV = centroidVizinho[0]
-		cyV = centroidVizinho[1]
+        #print('idMorador: ', idMorador)
+        #print('posicao: ', posicao)
+        #print('objectID: ', self.neighbor[idMorador][posicao]['objectID'])
+        #print('object: ', self.neighbor[idMorador][posicao]['object'])
+        #print('boundingB: ', self.neighbor[idMorador][posicao]['boundingB'])
+        #print('color: ', self.neighbor[idMorador][posicao]['color'])
+        #print('dRelativa: ', self.neighbor[idMorador][posicao]['dRelativa'])
+        #print()
 
-		#(self.objects[idVizinho][0] - self.objects[idMorador][0]) > 0
-		if cyV >= startY and cyV <= endY:
-			if (cxV - cxM) > 0:
-				return 2 #vizinho na direita
-			else:
-				return 1 #vizinho na esquerda
-		
-		if cxV >= startX and cxV <= endX:
-			if (cyV - cyM) > 0:
-				return 4 #vizinho em baixo
-			else:
-				return 3 #vizinho em cima
-		
-		if cxV >= startX and cyV >= endY: #canto inferior direito
-			return 7
-		if cxV >= startX and cyV <= endY: #canto superior direito
-			return 6
-		if cxV <= startX and cyV <= endY: #canto superior esquerdo
-			return 5
-		if cxV <= startX and cyV >= endY: #canto inferior esquerdo
-			return 8
-		
-	def closeNeighbor(self):
-		objectIDs = list(self.objects.keys())
-		objectCentroids = list(self.objects.values())
-		#calcula a distancia entre todos os centroides
-		D = dist.cdist(np.array(objectCentroids), np.array(objectCentroids))
-		#ordena os elementos das linhas do menor para o maior da esquerda para a direita
-		argsort = D.argsort()
-		
-		for i in np.arange(len(objectIDs)):
-			flagRight = 0
-			flagLeft = 0
-			flagTop = 0
-			flagDown = 0
-			idMorador = objectIDs[i]
-			#checa se o morador nao esta desaparecido
-			if self.disappeared[idMorador] == 0:
-				#distancia maxima para aceitar um vizinho com relacao a bounding box do morador
-				dMaxNeigh = abs(self.boundingB[idMorador][2]-self.boundingB[idMorador][0])*self.dMaxNeighbor
-				#ignora a primeira posicao que seria zero pois compara a distancia do morador com ele mesmo
-				for j in np.arange(len(objectIDs)-1)+1:
-					#checa se o vizinho esta dentro do valor limite
-					if D[i, argsort[i,j]] < dMaxNeigh:
-						idVizinho = objectIDs[argsort[i,j]]
-						#print("id objeto: ", objectIDs[i])
-						#print("id vizinhos: ", objectIDs[argsort[i,j]])
-						#print("D vizinho: ", D[i, argsort[i,j]])
-						#print()
-						#checa se o vizinho nao esta desaparecido
-						if self.disappeared[idVizinho] == 0:
-							#checa qual a vizinhanca do vizinho
-							flagRight, flagLeft, flagTop, flagDown = self.decideRegistraVizinho(idMorador, idVizinho, flagRight, flagLeft, flagTop, flagDown)
-					else:
-						break
+    def decideRegistraVizinho(self, idMorador, idVizinho, flagRight, flagLeft, flagTop, flagDown):
+        vizinhanca = self.checaProximidade(self.boundingB[idMorador], self.objects[idMorador], self.objects[idVizinho])
+        if vizinhanca == 1 or vizinhanca == 2:
+            if vizinhanca == 2 and flagRight == 0:
+                flagRight = 1
+                #vizinho esta a direita do morador
+                
+                #se nao há nenhum vizinho ja registrado, registra esse
+                if len(self.neighbor[idMorador]['Right']) == 0:
+                    self.registraVizinho(idMorador, idVizinho, 'Right')
+                #se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
+                else:
+                    distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
+                    distanciaVizinhoAntigo = self.neighbor[idMorador]['Right']['dRelativa']
+                    if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Right']['objectID'] == idVizinho):
+                        self.registraVizinho(idMorador, idVizinho, 'Right')
+            else:
+                if flagLeft == 0:
+                    flagLeft = 1
+                    #vizinho esta a esquerda do morador
+                    #se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
+                    if len(self.neighbor[idMorador]['Left']) == 0:
+                        self.registraVizinho(idMorador, idVizinho, 'Left')
+                    #se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo
+                    else:
+                        distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
+                        distanciaVizinhoAntigo = self.neighbor[idMorador]['Left']['dRelativa']
+                        if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Left']['objectID'] == idVizinho):
+                            self.registraVizinho(idMorador, idVizinho, 'Left')
+        
+        if vizinhanca == 3 or vizinhanca == 4:
+            if vizinhanca == 4 and flagDown == 0:
+                flagDown = 1
+                #vizinho esta a baixo do morador
+                
+                #se nao há nenhum vizinho ja registrado, registra esse
+                if len(self.neighbor[idMorador]['Down']) == 0:
+                    self.registraVizinho(idMorador, idVizinho, 'Down')
+                #se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
+                else:
+                    distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
+                    distanciaVizinhoAntigo = self.neighbor[idMorador]['Down']['dRelativa']
+                    if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Down']['objectID'] == idVizinho):
+                        self.registraVizinho(idMorador, idVizinho, 'Down')
+            else:
+                if flagTop == 0:
+                    flagTop = 1
+                    #vizinho esta a cima do morador
+                    #se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo, ou atualiza a posicao se for o mesmo vizinho
+                    if len(self.neighbor[idMorador]['Top']) == 0:
+                        self.registraVizinho(idMorador, idVizinho, 'Top')
+                    #se ja ha um vizinho registrado, compara para ver quem é o vizinho mais proximo
+                    else:
+                        distanciaVizinhoNovo = abs(self.objects[idVizinho][0] - self.objects[idMorador][0])
+                        distanciaVizinhoAntigo = self.neighbor[idMorador]['Top']['dRelativa']
+                        if (distanciaVizinhoNovo < distanciaVizinhoAntigo) or (self.neighbor[idMorador]['Top']['objectID'] == idVizinho):
+                            self.registraVizinho(idMorador, idVizinho, 'Top')
+        
+        return flagRight, flagLeft, flagTop, flagDown
 
-	def averageSpeed(self):
-		keyVelocit = list({key for key in self.relativeV if (len(self.relativeV[key]) > 0)})
-		
-		average = 0
-		#print()
-		#print(average)
-		for key in keyVelocit:
-			####################################
-			average += self.relativeV[key]
-			####################################
-			self.arrayRelativeV[key]['instantes'] = self.arrayRelativeV[key]['instantes'] + 1
-			k = self.arrayRelativeV[key]['instantes']
-			self.arrayRelativeV[key]['array'][1:-1] =  self.arrayRelativeV[key]['array'][0:-2]
-			
-			self.arrayRelativeV[key]['array'][0] = self.relativeV[key]
+    def checaProximidade(self, bbMorador, centroidMorador, centroidVizinho):
+        # 5 3 6
+        # 1   2
+        # 8 4 7
+        startX = bbMorador[0]
+        startY = bbMorador[1]
+        endX = bbMorador[2]
+        endY = bbMorador[3]
+        cxM = centroidMorador[0]
+        cyM = centroidMorador[1]
+        cxV = centroidVizinho[0]
+        cyV = centroidVizinho[1]
 
-			vx = self.arrayRelativeV[key]['averageIndividual'][0]
-			vy = self.arrayRelativeV[key]['averageIndividual'][1]
-			self.arrayRelativeV[key]['averageIndividual'] = (self.arrayRelativeV[key]['array'][0] + [vx*(k-1), vy*(k-1)])/k
+        #(self.objects[idVizinho][0] - self.objects[idMorador][0]) > 0
+        if cyV >= startY and cyV <= endY:
+            if (cxV - cxM) > 0:
+                return 2 #vizinho na direita
+            else:
+                return 1 #vizinho na esquerda
+        
+        if cxV >= startX and cxV <= endX:
+            if (cyV - cyM) > 0:
+                return 4 #vizinho em baixo
+            else:
+                return 3 #vizinho em cima
+        
+        if cxV >= startX and cyV >= endY: #canto inferior direito
+            return 7
+        if cxV >= startX and cyV <= endY: #canto superior direito
+            return 6
+        if cxV <= startX and cyV <= endY: #canto superior esquerdo
+            return 5
+        if cxV <= startX and cyV >= endY: #canto inferior esquerdo
+            return 8
+        
+    def closeNeighbor(self):
+        objectIDs = list(self.objects.keys())
+        objectCentroids = list(self.objects.values())
+        #calcula a distancia entre todos os centroides
+        D = dist.cdist(np.array(objectCentroids), np.array(objectCentroids))
+        #ordena os elementos das linhas do menor para o maior da esquerda para a direita
+        argsort = D.argsort()
+        
+        for i in np.arange(len(objectIDs)):
+            flagRight = 0
+            flagLeft = 0
+            flagTop = 0
+            flagDown = 0
+            idMorador = objectIDs[i]
+            #checa se o morador nao esta desaparecido
+            if self.disappeared[idMorador] == 0:
+                #distancia maxima para aceitar um vizinho com relacao a bounding box do morador
+                dMaxNeigh = abs(self.boundingB[idMorador][2]-self.boundingB[idMorador][0])*self.dMaxNeighbor
+                #ignora a primeira posicao que seria zero pois compara a distancia do morador com ele mesmo
+                for j in np.arange(len(objectIDs)-1)+1:
+                    #checa se o vizinho esta dentro do valor limite
+                    if D[i, argsort[i,j]] < dMaxNeigh:
+                        idVizinho = objectIDs[argsort[i,j]]
+                        #print("id objeto: ", objectIDs[i])
+                        #print("id vizinhos: ", objectIDs[argsort[i,j]])
+                        #print("D vizinho: ", D[i, argsort[i,j]])
+                        #print()
+                        #checa se o vizinho nao esta desaparecido
+                        if self.disappeared[idVizinho] == 0:
+                            #checa qual a vizinhanca do vizinho
+                            flagRight, flagLeft, flagTop, flagDown = self.decideRegistraVizinho(idMorador, idVizinho, flagRight, flagLeft, flagTop, flagDown)
+                    else:
+                        break
 
-			#print(average)
-		if len(keyVelocit) > 0:
-			############################################
-			self.averageS = average/len(keyVelocit)
-			############################################
-			#print(self.averageS)
-	
-	def momentLost(self):
-		self.averageSpeed()
-		
-		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
-		for key in keyDisappeared:
-			#print(key)
-			#print(self.objects[key])
-			###############self.objects[key] = (self.objects[key] + self.averageS).astype(int)
-			if self.arrayRelativeV[key]['instantes'] >= 60:
-				print("ID Laranja: ", key)
-				print("averageIndividual: ", self.arrayRelativeV[key]['averageIndividual'])
-				self.objects[key] = (self.objects[key] + self.arrayRelativeV[key]['averageIndividual']).astype(int)
+    def averageSpeed(self):
+        keyVelocit = list({key for key in self.relativeV if (len(self.relativeV[key]) > 0)})
+        
+        average = 0
+        #print()
+        #print(average)
+        for key in keyVelocit:
+            ####################################
+            average += self.relativeV[key]
+            ####################################
+            self.arrayRelativeV[key]['instantes'] = self.arrayRelativeV[key]['instantes'] + 1
+            k = self.arrayRelativeV[key]['instantes']
+            self.arrayRelativeV[key]['array'][1:-1] =  self.arrayRelativeV[key]['array'][0:-2]
+            
+            self.arrayRelativeV[key]['array'][0] = self.relativeV[key]
 
-				### soma em X
-				#self.boundingB[key][0] = (self.boundingB[key][0] + self.averageS[0]).astype(int)
-				#self.boundingB[key][2] = (self.boundingB[key][2] + self.averageS[0]).astype(int)
-				### soma em Y
-				#self.boundingB[key][1] = (self.boundingB[key][1] + self.averageS[1]).astype(int)
-				#self.boundingB[key][3] = (self.boundingB[key][3] + self.averageS[1]).astype(int)
-				###############box = ((self.boundingB[key][0] + self.averageS[0]).astype(int),
-				###############	   (self.boundingB[key][1] + self.averageS[1]).astype(int),
-				###############	   (self.boundingB[key][2] + self.averageS[0]).astype(int),
-				###############	   (self.boundingB[key][3] + self.averageS[1]).astype(int))
-				
-				box = ((self.boundingB[key][0] + self.arrayRelativeV[key]['averageIndividual'][0]).astype(int),
-					(self.boundingB[key][1] + self.arrayRelativeV[key]['averageIndividual'][1]).astype(int),
-					(self.boundingB[key][2] + self.arrayRelativeV[key]['averageIndividual'][0]).astype(int),
-					(self.boundingB[key][3] + self.arrayRelativeV[key]['averageIndividual'][1]).astype(int))
-				self.boundingB[key] = box
-				#print(self.objects[key])
-				#print()
-	
-	def deletaTrackingBeirada(self):
-		keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
-		print("rastreando: ", len(keyDisappeared))
-		#beirada = int(self.image_wy*(0.0162))
-		
-		beirada = int(self.image_wy*(self.percentBeirada))
-		beiradaInicio = beirada
-		beiradaFim = self.image_wy - beirada
-		#print("image_wy: ", self.image_wy)
-		#print("image_hx: ", self.image_hx)
-		#print("beiradaInicio: ", beiradaInicio)
-		#print("beiradaFim: ", beiradaFim)
-		#print()
-		for key in keyDisappeared:
-			cx = self.objects[key][0]
-			#print("key: ", key)
-			#print("cy: ", cy)
-			
-			if (cx < beiradaInicio) or (cx > beiradaFim):
-				self.deregister(key)
+            vx = self.arrayRelativeV[key]['averageIndividual'][0]
+            vy = self.arrayRelativeV[key]['averageIndividual'][1]
+            self.arrayRelativeV[key]['averageIndividual'] = (self.arrayRelativeV[key]['array'][0] + [vx*(k-1), vy*(k-1)])/k
 
-	def firstTracking(self, idC):
+            #print(average)
+        if len(keyVelocit) > 0:
+            ############################################
+            self.averageS = average/len(keyVelocit)
+            ############################################
+            #print(self.averageS)
+
+    def momentLost(self):
+        self.averageSpeed()
+        
+        keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
+        for key in keyDisappeared:
+            #print(key)
+            #print(self.objects[key])
+            ###############self.objects[key] = (self.objects[key] + self.averageS).astype(int)
+            if self.arrayRelativeV[key]['instantes'] >= 60:
+                print("ID Laranja: ", key)
+                print("averageIndividual: ", self.arrayRelativeV[key]['averageIndividual'])
+                self.objects[key] = (self.objects[key] + self.arrayRelativeV[key]['averageIndividual']).astype(int)
+
+                ### soma em X
+                #self.boundingB[key][0] = (self.boundingB[key][0] + self.averageS[0]).astype(int)
+                #self.boundingB[key][2] = (self.boundingB[key][2] + self.averageS[0]).astype(int)
+                ### soma em Y
+                #self.boundingB[key][1] = (self.boundingB[key][1] + self.averageS[1]).astype(int)
+                #self.boundingB[key][3] = (self.boundingB[key][3] + self.averageS[1]).astype(int)
+                ###############box = ((self.boundingB[key][0] + self.averageS[0]).astype(int),
+                ###############	   (self.boundingB[key][1] + self.averageS[1]).astype(int),
+                ###############	   (self.boundingB[key][2] + self.averageS[0]).astype(int),
+                ###############	   (self.boundingB[key][3] + self.averageS[1]).astype(int))
+                
+                box = ((self.boundingB[key][0] + self.arrayRelativeV[key]['averageIndividual'][0]).astype(int),
+                    (self.boundingB[key][1] + self.arrayRelativeV[key]['averageIndividual'][1]).astype(int),
+                    (self.boundingB[key][2] + self.arrayRelativeV[key]['averageIndividual'][0]).astype(int),
+                    (self.boundingB[key][3] + self.arrayRelativeV[key]['averageIndividual'][1]).astype(int))
+                self.boundingB[key] = box
+                #print(self.objects[key])
+                #print()
+
+    def deletaTrackingBeirada(self):
+        keyDisappeared = list({key for key in self.disappeared if (self.disappeared[key] > 0)})
+        print("rastreando: ", len(keyDisappeared))
+        #beirada = int(self.image_wy*(0.0162))
+        
+        beirada = int(self.image_wy*(self.percentBeirada))
+        beiradaInicio = beirada
+        beiradaFim = self.image_wy - beirada
+        #print("image_wy: ", self.image_wy)
+        #print("image_hx: ", self.image_hx)
+        #print("beiradaInicio: ", beiradaInicio)
+        #print("beiradaFim: ", beiradaFim)
+        #print()
+        for key in keyDisappeared:
+            cx = self.objects[key][0]
+            #print("key: ", key)
+            #print("cy: ", cy)
+            
+            if (cx < beiradaInicio) or (cx > beiradaFim):
+                self.deregister(key)
+
+    def firstTracking(self, idC):
         if self.trackingType == 'Dlib':
             self.trackerDLIB[idC] = dlib.correlation_tracker()
             rect = dlib.rectangle(self.boundingB[idC][0], self.boundingB[idC][1],
@@ -520,6 +520,7 @@ class CentroidTracker:
 				self.momentLost()
 			else: 
 				if self.flagTracker:
+                    
 					self.utilizeTrackingDLIB()
 			if self.flagBeirada:
 				self.deletaTrackingBeirada()
