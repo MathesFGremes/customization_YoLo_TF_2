@@ -229,7 +229,8 @@ def main(_argv):
             
 
         # atualiza os objetos do algoritmo de rastreamento de centroides
-        objects = ct.update(rects, confRects, rgb, frameOriginal)
+        #objects = ct.update(rects, confRects, rgb, frameOriginal)
+        objects = ct.update(rects, confRects, rgb)
         colors = ct.color
         desap = ct.disappeared
         BoundinBoxCt = ct.boundingB
@@ -240,7 +241,7 @@ def main(_argv):
 
         #image = utils.draw_bbox(frame, pred_bbox, show_BB=False)
         image = utils.draw_bbox(frame, pred_bbox, show_BB=True)
-        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps, frame = totalFrames)
+        image = utils.draw_bbox_tracker(image, objects, rects, colors, desap, BoundinBoxCt, totalObjetos = (ct.nextObjectID-1), fps = fps, frame = totalFrames, trackerType = ct.trackingType)
         #image = utils.draw_frame(image, totalFrames)
         #image = utils.draw_bbox_neighbor(image, ct)        
         
@@ -321,7 +322,7 @@ if __name__ == '__main__':
     
     ct = CentroidTracker(maxDisappeared=30, maxDistance=70, confiancaPrimeira = 0.85,
                          flagInputGreater=False, flagVelocitMoment = False,
-                         flagTracker = True, flagBeirada = True, trackingType = 'csrt')
+                         flagTracker = True, flagBeirada = True, trackingType = 'tld')
     #ct2 = copy.deepcopy(ct)
     trackers = []
     skip_frames = 2
